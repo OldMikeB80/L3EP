@@ -9,9 +9,12 @@ import {
 } from 'react-native';
 import { Card, Title, Paragraph, ProgressBar, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { LineChart, BarChart, PieChart } from 'react-native-svg-charts';
-import * as shape from 'd3-shape';
-import { G, Line, Circle, Text as SvgText } from 'react-native-svg';
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ContributionGraph,
+} from 'react-native-chart-kit';
 import { useAppSelector } from '@store/store';
 import { DatabaseService } from '@services/database/DatabaseService';
 
@@ -116,25 +119,29 @@ const ProgressScreen: React.FC = () => {
     return `${hours}h ${minutes % 60}m`;
   };
 
-  const Decorator = ({ x, y, data }: any) => {
-    return data.map((value: number, index: number) => (
-      <Circle
-        key={index}
-        cx={x(index)}
-        cy={y(value)}
-        r={4}
-        stroke={'#1976D2'}
-        fill={'white'}
-      />
-    ));
+  const chartConfig = {
+    backgroundColor: '#ffffff',
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientTo: '#ffffff',
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(25, 118, 210, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '4',
+      strokeWidth: '2',
+      stroke: '#1976D2',
+    },
   };
 
   const pieData = categoryData.map((category) => ({
-    value: category.questionsAnswered,
-    svg: {
-      fill: category.color,
-    },
-    key: category.name,
+    name: category.name,
+    population: category.questionsAnswered,
+    color: category.color,
+    legendFontColor: '#7F7F7F',
+    legendFontSize: 12,
   }));
 
   return (
@@ -207,21 +214,24 @@ const ProgressScreen: React.FC = () => {
           <Title style={styles.chartTitle}>Performance Trend</Title>
           <View style={styles.chartContainer}>
             <LineChart
-              style={{ height: 200 }}
-              data={weeklyData.map(d => d.value)}
-              svg={{ stroke: '#1976D2', strokeWidth: 2 }}
-              contentInset={{ top: 20, bottom: 20 }}
-              curve={shape.curveNatural}
-            >
-              <Decorator />
-            </LineChart>
-            <View style={styles.xAxisLabels}>
-              {weeklyData.map((item, index) => (
-                <Text key={index} style={styles.xAxisLabel}>
-                  {item.label}
-                </Text>
-              ))}
-            </View>
+              data={{
+                labels: weeklyData.map(d => d.label),
+                datasets: [
+                  {
+                    data: weeklyData.map(d => d.value),
+                  },
+                ],
+              }}
+              width={width - 60}
+              height={220}
+              yAxisSuffix="%"
+              chartConfig={chartConfig}
+              bezier
+              style={{
+                marginVertical: 8,
+                borderRadius: 16,
+              }}
+            />
           </View>
         </Card.Content>
       </Card>
@@ -264,10 +274,14 @@ const ProgressScreen: React.FC = () => {
           <Title style={styles.chartTitle}>Study Distribution</Title>
           <View style={styles.pieChartContainer}>
             <PieChart
-              style={{ height: 200 }}
               data={pieData}
-              spacing={0}
-              outerRadius={'95%'}
+              width={width - 60}
+              height={200}
+              chartConfig={chartConfig}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
             />
           </View>
           <View style={styles.legendContainer}>

@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, View, Text, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider, DefaultTheme, MD3DarkTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import SplashScreen from 'react-native-splash-screen';
+// import SplashScreen from 'react-native-splash-screen'; // Temporarily disabled
 import { NetworkProvider } from 'react-native-offline';
 
 import { store } from '@store/store';
@@ -47,10 +47,39 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
 // Placeholder screens (to be implemented)
-const ProfileScreen = () => null;
-const CategoryDetailScreen = () => null;
-const SettingsScreen = () => null;
-const QuestionDetailScreen = () => null;
+
+const PlaceholderScreen = ({ title }: { title: string }) => (
+  <View style={placeholderStyles.container}>
+    <Icon name="hammer-wrench" size={64} color="#ccc" />
+    <Text style={placeholderStyles.title}>{title}</Text>
+    <Text style={placeholderStyles.subtitle}>Coming Soon</Text>
+  </View>
+);
+
+const ProfileScreen = () => <PlaceholderScreen title="Profile" />;
+const CategoryDetailScreen = () => <PlaceholderScreen title="Category Details" />;
+const SettingsScreen = () => <PlaceholderScreen title="Settings" />;
+const QuestionDetailScreen = () => <PlaceholderScreen title="Question Details" />;
+
+const placeholderStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 20,
+    color: '#333',
+  },
+  subtitle: {
+    fontSize: 16,
+    marginTop: 8,
+    color: '#666',
+  },
+});
 
 const MainTabs = () => {
   return (
@@ -124,10 +153,10 @@ const App = () => {
         store.dispatch(loadUser());
 
         // Hide splash screen
-        SplashScreen.hide();
+        // SplashScreen.hide(); // Temporarily disabled
       } catch (error) {
         console.error('App initialization error:', error);
-        SplashScreen.hide();
+        // SplashScreen.hide(); // Temporarily disabled
       }
     };
 

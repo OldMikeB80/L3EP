@@ -12,7 +12,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, RadioButton, Button, ProgressBar, IconButton, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import MathJax from 'react-native-mathjax';
+// import MathJax from 'react-native-mathjax'; // Temporarily disabled
 import { useAppDispatch, useAppSelector } from '@store/store';
 import { Question, Option } from '@models/Question';
 import { TestSession, TestQuestion } from '@models/User';
@@ -260,23 +260,11 @@ const TestScreen: React.FC = () => {
             )}
             
             {currentQuestion.formulaLatex && (
-              <MathJax
-                html={`<p>$$${currentQuestion.formulaLatex}$$</p>`}
-                mathJaxOptions={{
-                  messageStyle: 'none',
-                  extensions: ['tex2jax.js'],
-                  jax: ['input/TeX', 'output/HTML-CSS'],
-                  tex2jax: {
-                    inlineMath: [['$', '$'], ['\\(', '\\)']],
-                    displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                    processEscapes: true,
-                  },
-                  TeX: {
-                    extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js'],
-                  },
-                }}
-                style={styles.mathJax}
-              />
+              <View style={styles.mathJax}>
+                <Text style={styles.formulaText}>
+                  Formula: {currentQuestion.formulaLatex}
+                </Text>
+              </View>
             )}
           </Card.Content>
         </Card>
@@ -474,6 +462,13 @@ const styles = StyleSheet.create({
   },
   mathJax: {
     backgroundColor: 'transparent',
+  },
+  formulaText: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: '#666',
+    textAlign: 'center',
+    padding: 10,
   },
   optionsContainer: {
     marginBottom: 20,
