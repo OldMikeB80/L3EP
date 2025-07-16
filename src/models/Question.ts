@@ -15,9 +15,9 @@ export interface Question {
   timesAnswered?: number;
   timesCorrect?: number;
   averageTime?: number;
-  lastSeen?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  lastSeen?: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Option {

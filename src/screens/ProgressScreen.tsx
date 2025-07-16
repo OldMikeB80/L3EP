@@ -13,7 +13,6 @@ import {
   LineChart,
   BarChart,
   PieChart,
-  ContributionGraph,
 } from 'react-native-chart-kit';
 import { useAppSelector } from '@store/store';
 import { DatabaseService } from '@services/database/DatabaseService';

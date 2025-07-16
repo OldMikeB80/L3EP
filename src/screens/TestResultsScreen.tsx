@@ -10,7 +10,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, Chip, ProgressBar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { PieChart } from 'react-native-svg-charts';
+// import { PieChart } from 'react-native-svg-charts'; // Removed - using chart-kit
 import { useAppSelector, useAppDispatch } from '@store/store';
 import { resetTest } from '@store/slices/testSlice';
 import { incrementDailyStat, checkAchievements } from '@store/slices/progressSlice';
@@ -158,6 +158,7 @@ const TestResultsScreen: React.FC = () => {
             <Text style={styles.scoreLabel}>Your Score</Text>
           </View>
           
+          {/* Temporarily disabled PieChart until chart library is properly configured
           <View style={styles.pieChartContainer}>
             <PieChart
               style={{ height: 150, width: 150 }}
@@ -169,6 +170,14 @@ const TestResultsScreen: React.FC = () => {
             <View style={styles.pieChartCenter}>
               <Text style={styles.pieChartCenterText}>
                 {testSession.correctAnswers}/{testSession.totalQuestions}
+              </Text>
+            </View>
+          </View>
+          */}
+          <View style={styles.pieChartContainer}>
+            <View style={styles.pieChartCenter}>
+              <Text style={styles.pieChartCenterText}>
+                {testSession?.correctAnswers || 0}/{testSession?.totalQuestions || 0}
               </Text>
             </View>
           </View>

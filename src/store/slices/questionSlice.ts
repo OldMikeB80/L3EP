@@ -10,7 +10,7 @@ interface QuestionState {
   searchResults: Question[];
   isLoading: boolean;
   error: string | null;
-  lastSync: Date | null;
+  lastSync: Date | string | null;
 }
 
 const initialState: QuestionState = {
@@ -41,6 +41,14 @@ export const loadQuestionsByCategory = createAsyncThunk(
   }
 );
 
+export const loadAllQuestions = createAsyncThunk(
+  'questions/loadAll',
+  async () => {
+    const db = DatabaseService.getInstance();
+    return await db.getAllQuestions();
+  }
+);
+
 export const searchQuestions = createAsyncThunk(
   'questions/search',
   async (query: string) => {
@@ -63,7 +71,7 @@ export const syncQuestionBank = createAsyncThunk(
   async () => {
     // In a real app, this would sync with a remote server
     // For now, we'll just update the last sync time
-    return new Date();
+    return new Date().toISOString();
   }
 );
 
@@ -90,7 +98,7 @@ const questionSlice = createSlice({
           question.timesCorrect = (question.timesCorrect || 0) + 1;
         }
         question.averageTime = ((question.averageTime || 0) * (question.timesAnswered - 1) + action.payload.timeSpent) / question.timesAnswered;
-        question.lastSeen = new Date();
+        question.lastSeen = new Date().toISOString();
       }
     },
   },
@@ -112,6 +120,19 @@ const questionSlice = createSlice({
       // Load questions by category
       .addCase(loadQuestionsByCategory.fulfilled, (state, action) => {
         state.questions = action.payload;
+      })
+      // Load all questions
+      .addCase(loadAllQuestions.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loadAllQuestions.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.questions = action.payload;
+      })
+      .addCase(loadAllQuestions.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Failed to load questions';
       })
       // Search questions
       .addCase(searchQuestions.pending, (state) => {

@@ -27,7 +27,7 @@ interface Achievement {
   title: string;
   description: string;
   icon: string;
-  unlockedAt?: Date;
+  unlockedAt?: Date | string;
   progress: number;
   target: number;
 }
@@ -169,7 +169,7 @@ const progressSlice = createSlice({
         
         // Mark as unlocked if target reached
         if (achievement.progress >= achievement.target && !achievement.unlockedAt) {
-          achievement.unlockedAt = new Date();
+          achievement.unlockedAt = new Date().toISOString();
         }
       });
     },

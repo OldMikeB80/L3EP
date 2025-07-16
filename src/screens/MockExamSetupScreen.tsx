@@ -44,11 +44,9 @@ const MockExamSetupScreen: React.FC = () => {
   ];
 
   const handleStartExam = async () => {
-    if (!currentUser) {
-      Alert.alert('Error', 'Please log in to start a mock exam');
-      return;
-    }
-
+    // Create a default user if none exists (temporary for testing)
+    const userId = currentUser?.id || 'default-user';
+    
     Alert.alert(
       'Start Mock Exam',
       `You are about to start a ${config.numberOfQuestions}-question mock exam with a ${config.timeLimit}-minute time limit. Are you ready?`,
@@ -62,13 +60,13 @@ const MockExamSetupScreen: React.FC = () => {
                 type: 'mock',
                 numberOfQuestions: config.numberOfQuestions,
                 timeLimit: config.timeLimit,
-                userId: currentUser.id,
+                userId: userId,
               })).unwrap();
               
-              navigation.navigate('Test' as never, {
+              (navigation as any).navigate('Test', {
                 testType: 'mock',
                 timeLimit: config.timeLimit,
-              } as never);
+              });
             } catch (error) {
               Alert.alert('Error', 'Failed to start mock exam');
             }

@@ -11,8 +11,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, FAB, Chip, IconButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppSelector, useAppDispatch } from '@store/store';
-import { loadQuestionsByCategory, toggleBookmark } from '@store/slices/questionSlice';
+import { loadQuestionsByCategory, toggleBookmark, loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
 import { Question } from '@models/Question';
+import { DatabaseService } from '@services/database/DatabaseService';
+import { colors } from '@constants/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -38,15 +40,26 @@ const StudyModeScreen: React.FC = () => {
 
   useEffect(() => {
     if (categoryId) {
-      dispatch(loadQuestionsByCategory(categoryId));
+      console.log('StudyModeScreen: Loading questions for category:', categoryId);
+      dispatch(loadQuestionsByCategory(categoryId) as any);
+    } else {
+      // Load all questions when no category is specified
+      console.log('StudyModeScreen: Loading all questions');
+      dispatch(loadAllQuestions() as any);
     }
-  }, [categoryId]);
+    dispatch(loadCategories() as any);
+  }, [categoryId, dispatch]);
 
   const filteredQuestions = questions.filter(q => {
     if (onlyBookmarked && !q.isBookmarked) return false;
     if (filterDifficulty !== 'all' && q.difficulty !== filterDifficulty) return false;
     return true;
   });
+
+  useEffect(() => {
+    console.log('StudyModeScreen: Questions loaded:', questions.length);
+    console.log('StudyModeScreen: Filtered questions:', filteredQuestions.length);
+  }, [questions, filteredQuestions]);
 
   const currentQuestion = filteredQuestions[currentIndex];
   const currentCategory = categories.find(c => c.id === categoryId);
@@ -66,11 +79,13 @@ const StudyModeScreen: React.FC = () => {
   };
 
   const handleBookmark = () => {
-    if (currentQuestion && currentUser) {
+    if (currentQuestion) {
+      // Use a default user ID if no user is logged in
+      const userId = currentUser?.id || 'default-user';
       dispatch(toggleBookmark({
-        userId: currentUser.id,
+        userId: userId,
         questionId: currentQuestion.id,
-      }));
+      }) as any);
     }
   };
 
@@ -79,7 +94,25 @@ const StudyModeScreen: React.FC = () => {
       return (
         <Card style={styles.emptyCard}>
           <Card.Content>
+            <Icon name="help-circle-outline" size={64} color="#999" style={{ alignSelf: 'center' }} />
             <Text style={styles.emptyText}>No questions available</Text>
+            <Text style={{ textAlign: 'center', marginTop: 10, color: '#666' }}>
+              Total questions loaded: {questions.length}
+            </Text>
+            <Button 
+              mode="contained" 
+              onPress={() => {
+                console.log('Reloading questions...');
+                if (categoryId) {
+                  dispatch(loadQuestionsByCategory(categoryId) as any);
+                } else {
+                  dispatch(loadAllQuestions() as any);
+                }
+              }}
+              style={{ marginTop: 20 }}
+            >
+              Reload Questions
+            </Button>
           </Card.Content>
         </Card>
       );
@@ -113,25 +146,40 @@ const StudyModeScreen: React.FC = () => {
 
           {/* Options */}
           <View style={styles.optionsContainer}>
-            {currentQuestion.options.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.optionCard,
-                  showAnswer && option.id === currentQuestion.correctAnswer && styles.correctOption,
-                  showAnswer && option.id !== currentQuestion.correctAnswer && styles.incorrectOption,
-                ]}
-                onPress={() => setShowAnswer(true)}
-                disabled={showAnswer}
-              >
-                <Text style={[
-                  styles.optionText,
-                  showAnswer && option.id === currentQuestion.correctAnswer && styles.correctText,
-                ]}>
-                  {option.text}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {currentQuestion.options.map((option) => {
+              const isCorrect = option.id === currentQuestion.correctAnswer;
+              const showAsCorrect = showAnswer && isCorrect;
+              const showAsIncorrect = showAnswer && !isCorrect;
+              
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[
+                    styles.optionCard,
+                    showAsCorrect && styles.correctOption,
+                    showAsIncorrect && styles.incorrectOption,
+                  ]}
+                  onPress={() => setShowAnswer(true)}
+                  disabled={showAnswer}
+                >
+                  <View style={styles.optionContent}>
+                    <Text style={[
+                      styles.optionText,
+                      showAsCorrect && styles.correctText,
+                      showAsIncorrect && styles.incorrectText,
+                    ]}>
+                      {option.text}
+                    </Text>
+                    {showAsCorrect && (
+                      <Icon name="check-circle" size={24} color={colors.success} />
+                    )}
+                    {showAsIncorrect && (
+                      <Icon name="close-circle" size={24} color={colors.error} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Explanation */}
@@ -176,7 +224,7 @@ const StudyModeScreen: React.FC = () => {
               <Card.Content>
                 <View style={styles.listItemHeader}>
                   <Text style={styles.listItemNumber}>Q{index + 1}</Text>
-                  <Chip size={20} style={styles.listDifficultyChip}>
+                  <Chip style={styles.listDifficultyChip}>
                     {question.difficulty}
                   </Chip>
                   {question.isBookmarked && (
@@ -280,41 +328,32 @@ const StudyModeScreen: React.FC = () => {
         {viewMode === 'card' ? renderCardView() : renderListView()}
       </View>
 
-      {/* Navigation Controls (Card View Only) */}
-      {viewMode === 'card' && (
-        <View style={styles.navigationControls}>
-          <Button
-            mode="outlined"
-            onPress={handlePrevious}
-            disabled={currentIndex === 0}
-            style={styles.navButton}
-            icon="chevron-left"
-          >
-            Previous
-          </Button>
-          
-          {!showAnswer ? (
-            <Button
-              mode="contained"
-              onPress={() => setShowAnswer(true)}
-              style={styles.navButton}
-              icon="eye"
-            >
-              Show Answer
-            </Button>
-          ) : (
-            <Button
-              mode="contained"
-              onPress={handleNext}
-              disabled={currentIndex === filteredQuestions.length - 1}
-              style={styles.navButton}
-              icon="chevron-right"
-            >
-              Next
-            </Button>
-          )}
-        </View>
-      )}
+      {/* Navigation Controls */}
+      <View style={styles.navigationControls}>
+        <Button
+          mode="contained"
+          onPress={handlePrevious}
+          disabled={currentIndex === 0}
+          style={[styles.navButton, currentIndex === 0 && styles.navButtonDisabled]}
+          labelStyle={currentIndex === 0 ? styles.navButtonTextDisabled : undefined}
+        >
+          Previous
+        </Button>
+        
+        <Text style={styles.progressIndicator}>
+          {currentIndex + 1} / {filteredQuestions.length}
+        </Text>
+        
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          disabled={currentIndex === filteredQuestions.length - 1}
+          style={[styles.navButton, currentIndex === filteredQuestions.length - 1 && styles.navButtonDisabled]}
+          labelStyle={currentIndex === filteredQuestions.length - 1 ? styles.navButtonTextDisabled : undefined}
+        >
+          Next
+        </Button>
+      </View>
 
       {/* Floating Action Button for Quick Actions */}
       <FAB.Group
@@ -348,49 +387,63 @@ const StudyModeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: 'white',
+    paddingVertical: 15,
+    backgroundColor: colors.surface,
     elevation: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerCenter: {
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
   },
   headerSubtitle: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   filterContainer: {
-    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: 'white',
-    maxHeight: 60,
+    paddingHorizontal: 20,
+    backgroundColor: colors.surface,
   },
   filterChip: {
-    marginRight: 8,
+    backgroundColor: colors.surfaceVariant,
+  },
+  filterChipSelected: {
+    backgroundColor: colors.primary,
+  },
+  filterChipText: {
+    color: colors.textPrimary,
+  },
+  filterChipTextSelected: {
+    color: colors.textOnPrimary,
   },
   progressContainer: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: colors.surface,
   },
   progressText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 5,
   },
   progressBar: {
@@ -407,86 +460,81 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  emptyCard: {
-    marginTop: 50,
-  },
-  emptyText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
+  // Card View Styles
+  cardContainer: {
+    flex: 1,
+    paddingVertical: 20,
   },
   questionCard: {
-    elevation: 2,
+    margin: 20,
+    elevation: 4,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
   },
-  questionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+  questionContent: {
+    padding: 20,
   },
-  difficultyChip: {
-    height: 28,
-  },
-  easyChip: {
-    borderColor: '#4CAF50',
-  },
-  mediumChip: {
-    borderColor: '#FF9800',
-  },
-  hardChip: {
-    borderColor: '#F44336',
+  questionLabel: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
   questionText: {
-    fontSize: 18,
-    lineHeight: 26,
-    marginBottom: 20,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.textPrimary,
+    marginBottom: 15,
   },
   optionsContainer: {
-    marginBottom: 20,
+    marginVertical: 10,
   },
   optionCard: {
-    backgroundColor: '#f0f0f0',
-    padding: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    backgroundColor: colors.surfaceVariant,
   },
-  correctOption: {
+  optionCardCorrect: {
+    borderColor: colors.success,
     backgroundColor: '#E8F5E9',
-    borderColor: '#4CAF50',
-  },
-  incorrectOption: {
-    opacity: 0.6,
   },
   optionText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    color: colors.textPrimary,
   },
-  correctText: {
-    fontWeight: '600',
-    color: '#2E7D32',
+  correctAnswer: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
+  correctAnswerText: {
+    color: colors.textOnPrimary,
+  },
+  showAnswerButton: {
+    marginTop: 20,
+    backgroundColor: colors.accent,
   },
   explanationContainer: {
     marginTop: 20,
-    padding: 15,
-    backgroundColor: '#E3F2FD',
+    padding: 16,
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 8,
-  },
-  explanationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
   },
   explanationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: colors.primary,
   },
   explanationText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#333',
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textPrimary,
   },
   referencesContainer: {
     marginTop: 15,
@@ -504,11 +552,18 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 3,
   },
+  // List View Styles
   listContainer: {
-    flex: 1,
+    paddingVertical: 10,
   },
   listItem: {
-    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: colors.surface,
   },
   listItemHeader: {
     flexDirection: 'row',
@@ -516,13 +571,45 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listItemNumber: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+  listItemNumberText: {
+    color: colors.textOnPrimary,
+    fontWeight: 'bold',
+  },
+  listItemContent: {
+    flex: 1,
+  },
+  listItemQuestion: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1976D2',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  listItemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listItemDifficulty: {
+    fontSize: 12,
     marginRight: 10,
   },
-  listDifficultyChip: {
-    marginRight: 10,
+  difficultyEasy: {
+    color: colors.success,
+  },
+  difficultyMedium: {
+    color: colors.warning,
+  },
+  difficultyHard: {
+    color: colors.error,
+  },
+  listItemBookmark: {
+    marginLeft: 10,
   },
   listItemText: {
     fontSize: 15,
@@ -532,19 +619,112 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'white',
+    paddingVertical: 10,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.border,
   },
   navButton: {
-    flex: 0.48,
+    padding: 10,
+  },
+  navButtonDisabled: {
+    opacity: 0.3,
+  },
+  navButtonTextDisabled: {
+    color: '#999',
+  },
+  progressIndicator: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginHorizontal: 10,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 80,
+  },
+  // Additional styles
+  categoryChip: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: colors.accent,
+  },
+  categoryChipText: {
+    color: colors.textOnAccent,
+    fontSize: 12,
+  },
+  // Empty state
+  emptyCard: {
+    margin: 20,
+    padding: 40,
+    backgroundColor: colors.surface,
+    elevation: 2,
+    borderRadius: 12,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 20,
+    color: colors.textSecondary,
+  },
+  // Question header styles
+  questionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  difficultyChip: {
+    height: 28,
+  },
+  easyChip: {
+    borderColor: colors.success,
+  },
+  mediumChip: {
+    borderColor: colors.warning,
+  },
+  hardChip: {
+    borderColor: colors.error,
+  },
+  // Option styles
+  correctOption: {
+    backgroundColor: '#E8F5E9',
+    borderColor: colors.success,
+    borderWidth: 2,
+  },
+  incorrectOption: {
+    backgroundColor: '#FFEBEE',
+    borderColor: colors.error,
+    borderWidth: 2,
+    opacity: 0.9,
+  },
+  correctText: {
+    fontWeight: '600',
+    color: colors.success,
+  },
+  incorrectText: {
+    fontWeight: '600',
+    color: colors.error,
+    opacity: 0.7,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bookmarkButton: {
+    padding: 10,
+  },
+  explanationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  listDifficultyChip: {
+    marginRight: 10,
   },
 });
 

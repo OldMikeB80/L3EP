@@ -12,6 +12,11 @@ interface TestState {
   error: string | null;
   timeRemaining: number;
   isPaused: boolean;
+  // Additional properties for compatibility
+  currentQuestion: Question | null;
+  questionIndex: number;
+  totalQuestions: number;
+  testSession: TestSession | null;
 }
 
 const initialState: TestState = {
@@ -23,6 +28,11 @@ const initialState: TestState = {
   error: null,
   timeRemaining: 0,
   isPaused: false,
+  // Additional properties for compatibility
+  currentQuestion: null,
+  questionIndex: 0,
+  totalQuestions: 0,
+  testSession: null,
 };
 
 // Async thunks
@@ -54,7 +64,7 @@ export const startTestSession = createAsyncThunk(
       userId: params.userId,
       type: params.type,
       categoryId: params.categoryId,
-      startTime: new Date(),
+      startTime: new Date().toISOString(),
       totalQuestions: questions.length,
       correctAnswers: 0,
       score: 0,
@@ -111,7 +121,7 @@ export const endTestSession = createAsyncThunk(
       const score = (correctAnswers / state.test.questions.length) * 100;
       
       await db.updateTestSession(state.test.currentSession.id, {
-        endTime: new Date(),
+        endTime: new Date().toISOString(),
         correctAnswers,
         score,
         completed: true,
@@ -131,11 +141,15 @@ const testSlice = createSlice({
     nextQuestion: (state) => {
       if (state.currentQuestionIndex < state.questions.length - 1) {
         state.currentQuestionIndex += 1;
+        state.questionIndex = state.currentQuestionIndex;
+        state.currentQuestion = state.questions[state.currentQuestionIndex];
       }
     },
     previousQuestion: (state) => {
       if (state.currentQuestionIndex > 0) {
         state.currentQuestionIndex -= 1;
+        state.questionIndex = state.currentQuestionIndex;
+        state.currentQuestion = state.questions[state.currentQuestionIndex];
       }
     },
     jumpToQuestion: (state, action: PayloadAction<number>) => {
@@ -176,12 +190,30 @@ const testSlice = createSlice({
       })
       .addCase(startTestSession.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.currentSession = action.payload.session;
+        state.currentSession = {
+          id: action.payload.session.id,
+          userId: action.payload.session.userId,
+          type: action.payload.session.type,
+          categoryId: action.payload.session.categoryId,
+          startTime: action.payload.session.startTime,
+          endTime: undefined,
+          totalQuestions: action.payload.session.totalQuestions,
+          correctAnswers: action.payload.session.correctAnswers,
+          score: action.payload.session.score,
+          questions: action.payload.session.questions,
+          completed: action.payload.session.completed,
+        };
         state.questions = action.payload.questions;
         state.currentQuestionIndex = 0;
         state.timeRemaining = action.payload.timeLimit ? action.payload.timeLimit * 60 : 0;
         state.answers = {};
         state.isPaused = false;
+        
+        // Set additional properties for compatibility
+        state.currentQuestion = action.payload.questions[0] || null;
+        state.questionIndex = 0;
+        state.totalQuestions = action.payload.questions.length;
+        state.testSession = state.currentSession;
       })
       .addCase(startTestSession.rejected, (state, action) => {
         state.isLoading = false;

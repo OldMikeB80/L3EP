@@ -23,8 +23,13 @@ const CategoriesScreen: React.FC = () => {
   const { categoryProgress } = useAppSelector((state) => state.progress);
 
   useEffect(() => {
-    dispatch(loadCategories());
-  }, []);
+    console.log('CategoriesScreen: Loading categories...');
+    dispatch(loadCategories() as any);
+  }, [dispatch]);
+
+  useEffect(() => {
+    console.log('CategoriesScreen: Categories loaded:', categories);
+  }, [categories]);
 
   const getCategoryProgress = (categoryId: string) => {
     const progress = categoryProgress[categoryId];

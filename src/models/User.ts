@@ -30,8 +30,8 @@ export interface TestSession {
   userId: string;
   type: 'practice' | 'mock' | 'category' | 'weak_areas';
   categoryId?: string;
-  startTime: Date;
-  endTime?: Date;
+  startTime: Date | string;
+  endTime?: Date | string;
   duration?: number; // minutes
   totalQuestions: number;
   correctAnswers: number;

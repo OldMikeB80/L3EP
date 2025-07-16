@@ -70,7 +70,7 @@ export class DatabaseService {
         difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard')),
         image_url TEXT,
         formula_latex TEXT,
-        references TEXT,
+        reference_texts TEXT,
         tags TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -219,25 +219,58 @@ export class DatabaseService {
   public async getQuestionsByCategory(categoryId: string, limit?: number): Promise<Question[]> {
     if (!this.database) throw new Error('Database not initialized');
 
-    const query = `
-      SELECT q.*, GROUP_CONCAT(
-        json_object(
-          'id', o.id,
-          'text', o.text,
-          'imageUrl', o.image_url
-        )
-      ) as options_json
-      FROM questions q
-      LEFT JOIN options o ON q.id = o.question_id
-      WHERE q.category_id = ?
-      GROUP BY q.id
-      ${limit ? 'LIMIT ?' : ''}
-    `;
-
-    const params = limit ? [categoryId, limit] : [categoryId];
-    const [result] = await this.database.executeSql(query, params);
-
-    return this.parseQuestions(result);
+    try {
+      const questionsQuery = `
+        SELECT * FROM questions 
+        WHERE category_id = ?
+        ORDER BY difficulty
+        ${limit ? 'LIMIT ?' : ''}
+      `;
+      
+      const params = limit ? [categoryId, limit] : [categoryId];
+      const results = await this.database.executeSql(questionsQuery, params);
+      
+      const questions: Question[] = [];
+      for (let i = 0; i < results[0].rows.length; i++) {
+        const row = results[0].rows.item(i);
+        
+        // Get options for this question
+        const optionsQuery = `SELECT * FROM options WHERE question_id = ? ORDER BY option_order`;
+        const optionsResults = await this.database.executeSql(optionsQuery, [row.id]);
+        
+        const options = [];
+        for (let j = 0; j < optionsResults[0].rows.length; j++) {
+          const optionRow = optionsResults[0].rows.item(j);
+          options.push({
+            id: optionRow.id,
+            text: optionRow.text,
+            imageUrl: optionRow.image_url,
+          });
+        }
+        
+        questions.push({
+          id: row.id,
+          categoryId: row.category_id,
+          subcategoryId: row.subcategory_id,
+          question: row.question,
+          correctAnswer: row.correct_answer,
+          explanation: row.explanation,
+          difficulty: row.difficulty,
+          imageUrl: row.image_url,
+          formulaLatex: row.formula_latex,
+          references: JSON.parse(row.reference_texts || '[]'),
+          tags: JSON.parse(row.tags || '[]'),
+          options: options,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        });
+      }
+      
+      return questions;
+    } catch (error) {
+      console.error('Error fetching questions by category:', error);
+      return [];
+    }
   }
 
   public async getQuestionById(id: string): Promise<Question | null> {
@@ -289,8 +322,8 @@ export class DatabaseService {
         formulaLatex: row.formula_latex,
         references: row.references ? JSON.parse(row.references) : [],
         tags: row.tags ? JSON.parse(row.tags) : [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
       });
     }
 
@@ -313,7 +346,7 @@ export class DatabaseService {
       user.name,
       user.email,
       user.profileImage || null,
-      user.targetExamDate ? user.targetExamDate.toISOString() : null,
+      user.targetExamDate ? user.targetExamDate : null,
       user.dailyStudyGoal,
       JSON.stringify(user.preferredCategories || []),
       user.notificationsEnabled ? 1 : 0,
@@ -338,7 +371,7 @@ export class DatabaseService {
       session.userId,
       session.type,
       session.categoryId || null,
-      session.startTime.toISOString(),
+      session.startTime,
       session.totalQuestions,
       0,
     ]);
@@ -411,6 +444,266 @@ export class DatabaseService {
     if (this.database) {
       await this.database.close();
       this.database = undefined;
+    }
+  }
+
+  // Stub methods to fix TypeScript errors - implement these later
+  public async getUser(userId: string): Promise<User | null> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      const results = await this.database.executeSql(
+        'SELECT * FROM users WHERE id = ?',
+        [userId]
+      );
+      
+      if (results[0].rows.length === 0) {
+        return null;
+      }
+      
+      const userData = results[0].rows.item(0);
+      return {
+        ...userData,
+        preferences: JSON.parse(userData.preferences || '{}'),
+        achievements: JSON.parse(userData.achievements || '[]'),
+        createdAt: userData.created_at,
+        updatedAt: userData.updated_at,
+      };
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      return null;
+    }
+  }
+
+  public async updateUserProgress(categoryId: string, progress: any): Promise<void> {
+    // TODO: Implement
+  }
+
+  public async getCategories(): Promise<Category[]> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      const results = await this.database.executeSql(
+        'SELECT * FROM categories ORDER BY name'
+      );
+      
+      const categories: Category[] = [];
+      for (let i = 0; i < results[0].rows.length; i++) {
+        categories.push(results[0].rows.item(i));
+      }
+      
+      return categories;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
+  }
+
+
+
+  public async getAllQuestions(): Promise<Question[]> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      console.log('DatabaseService: Getting all questions...');
+      
+      // First get all questions
+      const questionsQuery = `SELECT * FROM questions ORDER BY category_id, difficulty`;
+      const results = await this.database.executeSql(questionsQuery);
+      console.log('DatabaseService: Questions query executed, rows found:', results[0].rows.length);
+      
+      const questions: Question[] = [];
+      
+      for (let i = 0; i < results[0].rows.length; i++) {
+        const row = results[0].rows.item(i);
+        
+        // Get options for this question
+        const optionsQuery = `SELECT * FROM options WHERE question_id = ? ORDER BY option_order`;
+        const optionsResults = await this.database.executeSql(optionsQuery, [row.id]);
+        
+        const options = [];
+        for (let j = 0; j < optionsResults[0].rows.length; j++) {
+          const optionRow = optionsResults[0].rows.item(j);
+          options.push({
+            id: optionRow.id,
+            text: optionRow.text,
+            imageUrl: optionRow.image_url,
+          });
+        }
+        
+        questions.push({
+          id: row.id,
+          categoryId: row.category_id,
+          subcategoryId: row.subcategory_id,
+          question: row.question,
+          correctAnswer: row.correct_answer,
+          explanation: row.explanation,
+          difficulty: row.difficulty,
+          imageUrl: row.image_url,
+          formulaLatex: row.formula_latex,
+          references: JSON.parse(row.reference_texts || '[]'),
+          tags: JSON.parse(row.tags || '[]'),
+          options: options,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        });
+      }
+      
+      console.log('DatabaseService: Returning questions:', questions.length);
+      return questions;
+    } catch (error) {
+      console.error('Error fetching all questions:', error);
+      return [];
+    }
+  }
+
+  public async searchQuestions(query: string): Promise<Question[]> {
+    // TODO: Implement search functionality
+    return [];
+  }
+
+  public async toggleBookmark(userId: string, questionId: string): Promise<void> {
+    // TODO: Implement
+  }
+
+  public async getWeakAreaQuestions(userId: string, limit: number): Promise<Question[]> {
+    return [];
+  }
+
+  public async getRandomQuestions(limit: number): Promise<Question[]> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      const query = `
+        SELECT q.*, GROUP_CONCAT(
+          json_object(
+            'id', o.id,
+            'text', o.text,
+            'imageUrl', o.image_url
+          )
+        ) as options_json
+        FROM questions q
+        LEFT JOIN options o ON q.id = o.question_id
+        GROUP BY q.id
+        ORDER BY RANDOM()
+        LIMIT ?
+      `;
+      
+      const results = await this.database.executeSql(query, [limit]);
+      
+      const questions: Question[] = [];
+      for (let i = 0; i < results[0].rows.length; i++) {
+        const row = results[0].rows.item(i);
+        questions.push({
+          ...row,
+          categoryId: row.category_id,
+          subcategoryId: row.subcategory_id,
+          correctAnswer: row.correct_answer,
+          imageUrl: row.image_url,
+          formulaLatex: row.formula_latex,
+          references: JSON.parse(row.reference_texts || '[]'),
+          tags: JSON.parse(row.tags || '[]'),
+          options: row.options_json ? JSON.parse(`[${row.options_json}]`) : [],
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        });
+      }
+      
+      return questions;
+    } catch (error) {
+      console.error('Error fetching random questions:', error);
+      return [];
+    }
+  }
+
+  public async updateTestAnswer(sessionId: string, questionId: string, answer: any): Promise<void> {
+    // TODO: Implement
+  }
+
+  public async updateTestSession(sessionId: string, updates: any): Promise<void> {
+    // TODO: Implement
+  }
+
+
+
+  public async getWeeklyStats(userId: string): Promise<any> {
+    return {};
+  }
+
+  public async insertCategory(category: Category): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      console.log('Executing insertCategory SQL for:', category.name);
+      const result = await this.database.executeSql(
+        `INSERT OR REPLACE INTO categories (
+          id, name, description, icon, color, total_questions, required_pass_percentage
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          category.id,
+          category.name,
+          category.description,
+          category.icon,
+          category.color,
+          category.totalQuestions,
+          category.requiredPassPercentage,
+        ]
+      );
+      console.log('Insert category result:', result);
+    } catch (error) {
+      console.error('❌ Error inserting category:', error);
+      console.error('Category data:', category);
+      throw error;
+    }
+  }
+
+  public async insertQuestion(question: Question): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    try {
+      // Insert question
+      await this.database.executeSql(
+        `INSERT OR REPLACE INTO questions (
+          id, category_id, subcategory_id, question, correct_answer,
+          explanation, difficulty, image_url, formula_latex, 
+          reference_texts, tags, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          question.id,
+          question.categoryId,
+          question.subcategoryId || null,
+          question.question,
+          question.correctAnswer,
+          question.explanation,
+          question.difficulty,
+          question.imageUrl || null,
+          question.formulaLatex || null,
+          JSON.stringify(question.references || []),
+          JSON.stringify(question.tags || []),
+          question.createdAt,
+          question.updatedAt,
+        ]
+      );
+
+      // Insert options
+      for (let i = 0; i < question.options.length; i++) {
+        const option = question.options[i];
+        await this.database.executeSql(
+          `INSERT OR REPLACE INTO options (
+            id, question_id, text, image_url, option_order
+          ) VALUES (?, ?, ?, ?, ?)`,
+          [
+            option.id,
+            question.id,
+            option.text,
+            option.imageUrl || null,
+            i,
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error inserting question:', error);
+      throw error;
     }
   }
 } 

@@ -16,7 +16,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppDispatch, useAppSelector } from '@store/store';
 import { Question, Option } from '@models/Question';
 import { TestSession, TestQuestion } from '@models/User';
-import { submitAnswer, nextQuestion, previousQuestion, bookmarkQuestion } from '@store/slices/testSlice';
+import { submitAnswer, nextQuestion, previousQuestion, bookmarkQuestion, startTestSession } from '@store/slices/testSlice';
+import { colors } from '@constants/colors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,35 +34,73 @@ const TestScreen: React.FC = () => {
   
   const { testType, categoryId, timeLimit } = route.params as TestScreenProps;
   
-  const { currentQuestion, questionIndex, totalQuestions, testSession } = useAppSelector(
+  const { currentQuestion, questionIndex, totalQuestions, testSession, isPaused } = useAppSelector(
     (state) => state.test
   );
+  const { currentUser } = useAppSelector((state) => state.user);
+  const { questions: allQuestions } = useAppSelector((state) => state.questions);
   
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [timeRemaining, setTimeRemaining] = useState(timeLimit ? timeLimit * 60 : 0);
   const [showExplanation, setShowExplanation] = useState(false);
   const [confidence, setConfidence] = useState<'low' | 'medium' | 'high'>('medium');
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Initialize test session when component mounts
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    if (!testSession) {
+      // Start a test session with default parameters
+      const userId = currentUser?.id || 'default-user';
+      dispatch(startTestSession({
+        type: testType,
+        categoryId: categoryId,
+        numberOfQuestions: testType === 'practice' ? 15 : 150, // 15 for practice, 150 for mock
+        timeLimit: timeLimit,
+        userId: userId,
+      }) as any);
+    }
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    if (timeLimit && timeRemaining > 0) {
+    if (timeLimit && timeRemaining > 0 && !isPaused && isMountedRef.current) {
       intervalRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            handleTimeUp();
-            return 0;
-          }
-          return prev - 1;
-        });
+        if (isMountedRef.current) {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              handleTimeUp();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }
       }, 1000);
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [timeRemaining]);
+  }, [timeRemaining, isPaused]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -150,14 +189,15 @@ const TestScreen: React.FC = () => {
     const isSelected = selectedAnswer === option.id;
     const isCorrect = showExplanation && option.id === currentQuestion?.correctAnswer;
     const isWrong = showExplanation && isSelected && !isCorrect;
+    const showCorrectAnswer = showExplanation && option.id === currentQuestion?.correctAnswer;
 
     return (
       <TouchableOpacity
         key={option.id}
         style={[
           styles.optionCard,
-          isSelected && styles.selectedOption,
-          isCorrect && styles.correctOption,
+          isSelected && !showExplanation && styles.selectedOption,
+          showCorrectAnswer && styles.correctOption,
           isWrong && styles.wrongOption,
         ]}
         onPress={() => !showExplanation && setSelectedAnswer(option.id)}
@@ -169,11 +209,21 @@ const TestScreen: React.FC = () => {
             status={isSelected ? 'checked' : 'unchecked'}
             onPress={() => !showExplanation && setSelectedAnswer(option.id)}
             disabled={showExplanation}
-            color={isCorrect ? '#4CAF50' : isWrong ? '#F44336' : '#1976D2'}
+            color={showCorrectAnswer ? colors.success : isWrong ? colors.error : colors.primary}
           />
-          <Text style={[styles.optionText, (isCorrect || isWrong) && styles.highlightedText]}>
+          <Text style={[
+            styles.optionText, 
+            showCorrectAnswer && styles.correctText,
+            isWrong && styles.wrongText,
+          ]}>
             {option.text}
           </Text>
+          {showCorrectAnswer && (
+            <Icon name="check-circle" size={24} color={colors.success} style={styles.resultIcon} />
+          )}
+          {isWrong && (
+            <Icon name="close-circle" size={24} color={colors.error} style={styles.resultIcon} />
+          )}
         </View>
         {option.imageUrl && (
           <Image source={{ uri: option.imageUrl }} style={styles.optionImage} />
@@ -317,7 +367,7 @@ const TestScreen: React.FC = () => {
                 <Icon 
                   name={selectedAnswer === currentQuestion.correctAnswer ? "check-circle" : "close-circle"} 
                   size={24} 
-                  color={selectedAnswer === currentQuestion.correctAnswer ? "#4CAF50" : "#F44336"} 
+                  color={selectedAnswer === currentQuestion.correctAnswer ? colors.success : colors.error} 
                 />
                 <Text style={styles.explanationTitle}>
                   {selectedAnswer === currentQuestion.correctAnswer ? "Correct!" : "Incorrect"}
@@ -328,7 +378,7 @@ const TestScreen: React.FC = () => {
               {currentQuestion.references && currentQuestion.references.length > 0 && (
                 <View style={styles.referencesContainer}>
                   <Text style={styles.referencesTitle}>References:</Text>
-                  {currentQuestion.references.map((ref, index) => (
+                  {currentQuestion.references.map((ref: string, index: number) => (
                     <Text key={index} style={styles.referenceText}>• {ref}</Text>
                   ))}
                 </View>
@@ -364,19 +414,21 @@ const TestScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: 'white',
-    paddingTop: 50,
+    backgroundColor: colors.surface,
+    paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 10,
     elevation: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerTop: {
     flexDirection: 'row',
@@ -391,35 +443,34 @@ const styles = StyleSheet.create({
   questionNumber: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
   },
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
   },
   timerWarning: {
     backgroundColor: '#FFEBEE',
   },
   timerText: {
-    marginLeft: 4,
+    marginLeft: 5,
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textPrimary,
   },
   timerTextWarning: {
-    color: '#F44336',
+    color: colors.error,
   },
   progressBar: {
     height: 4,
-    borderRadius: 2,
+    marginBottom: 0,
   },
   content: {
     flex: 1,
-    padding: 20,
   },
   questionCard: {
     marginBottom: 20,
@@ -437,22 +488,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   difficultyChip: {
-    height: 28,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   easyChip: {
-    borderColor: '#4CAF50',
+    backgroundColor: '#E8F5E9',
   },
   mediumChip: {
-    borderColor: '#FF9800',
+    backgroundColor: '#FFF3E0',
   },
   hardChip: {
-    borderColor: '#F44336',
+    backgroundColor: '#FFEBEE',
   },
   questionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#333',
-    marginBottom: 15,
+    fontSize: 18,
+    lineHeight: 26,
+    color: colors.textPrimary,
+    marginBottom: 20,
   },
   questionImage: {
     width: '100%',
@@ -474,43 +527,54 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   optionCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
-    marginBottom: 10,
-    padding: 15,
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: 'transparent',
+    elevation: 1,
   },
   selectedOption: {
-    borderColor: '#1976D2',
-    backgroundColor: '#E3F2FD',
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceVariant,
   },
   correctOption: {
-    borderColor: '#4CAF50',
+    borderColor: colors.success,
     backgroundColor: '#E8F5E9',
   },
   wrongOption: {
-    borderColor: '#F44336',
+    borderColor: colors.error,
     backgroundColor: '#FFEBEE',
   },
   optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
   },
   optionText: {
     flex: 1,
-    fontSize: 15,
-    color: '#333',
+    fontSize: 16,
+    color: colors.textPrimary,
     marginLeft: 10,
   },
-  highlightedText: {
+  correctText: {
+    color: colors.success,
     fontWeight: '600',
+  },
+  wrongText: {
+    color: colors.error,
+    fontWeight: '600',
+  },
+  resultIcon: {
+    marginLeft: 10,
   },
   optionImage: {
     width: '100%',
-    height: 100,
+    height: 150,
+    resizeMode: 'contain',
     marginTop: 10,
-    borderRadius: 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   confidenceCard: {
     marginBottom: 20,
@@ -530,24 +594,26 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     alignItems: 'center',
   },
   confidenceSelected: {
-    backgroundColor: '#1976D2',
-    borderColor: '#1976D2',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   confidenceText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   confidenceTextSelected: {
-    color: 'white',
+    color: colors.textOnPrimary,
     fontWeight: '600',
   },
   explanationCard: {
     marginBottom: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 12,
+    elevation: 1,
   },
   explanationHeader: {
     flexDirection: 'row',
@@ -558,11 +624,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 8,
+    color: colors.textPrimary,
   },
   explanationText: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#333',
+    color: colors.textPrimary,
   },
   referencesContainer: {
     marginTop: 15,

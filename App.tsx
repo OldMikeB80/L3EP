@@ -1,18 +1,21 @@
 import React, { useEffect } from 'react';
-import { StatusBar, View, Text, StyleSheet } from 'react-native';
-import { Provider } from 'react-redux';
+import { StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Provider, useSelector, useDispatch } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Provider as PaperProvider, DefaultTheme, MD3DarkTheme } from 'react-native-paper';
+import { Provider as PaperProvider, DefaultTheme, MD3DarkTheme, Button, Card, List, Avatar, Title } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import SplashScreen from 'react-native-splash-screen'; // Temporarily disabled
 import { NetworkProvider } from 'react-native-offline';
 
-import { store } from '@store/store';
+import { store, RootState } from '@store/store';
 import { DatabaseService } from '@services/database/DatabaseService';
+import { seedDatabase } from '@data/seedQuestions';
 import { loadSettingsFromStorage } from '@store/slices/settingsSlice';
-import { loadUser } from '@store/slices/userSlice';
+import { loadUser, createUser } from '@store/slices/userSlice';
+import { loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
+import { colors } from '@constants/colors';
 
 // Screens
 import HomeScreen from '@screens/HomeScreen';
@@ -47,7 +50,6 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
 // Placeholder screens (to be implemented)
-
 const PlaceholderScreen = ({ title }: { title: string }) => (
   <View style={placeholderStyles.container}>
     <Icon name="hammer-wrench" size={64} color="#ccc" />
@@ -56,7 +58,70 @@ const PlaceholderScreen = ({ title }: { title: string }) => (
   </View>
 );
 
-const ProfileScreen = () => <PlaceholderScreen title="Profile" />;
+const ProfileScreen = () => {
+  const dispatch = useDispatch();
+  const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user);
+  
+  const handleCreateDefaultUser = async () => {
+    try {
+      await dispatch(createUser({
+        name: 'Test User',
+        email: 'test@example.com',
+        dailyStudyGoal: 30,
+        notificationsEnabled: true,
+      }) as any);
+    } catch (error) {
+      console.error('Error creating user:', error);
+    }
+  };
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <View style={placeholderStyles.container}>
+        <Icon name="account-circle" size={64} color="#1976D2" />
+        <Text style={placeholderStyles.title}>Welcome to NDT Exam Prep</Text>
+        <Text style={placeholderStyles.subtitle}>Create a profile to track your progress</Text>
+        <Button 
+          mode="contained"
+          onPress={handleCreateDefaultUser}
+          style={{ marginTop: 20, paddingHorizontal: 30 }}
+        >
+          Create Test Profile
+        </Button>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={profileStyles.container}>
+      <View style={profileStyles.header}>
+        <Avatar.Text 
+          size={80} 
+          label={currentUser.name.charAt(0)} 
+          style={{ backgroundColor: '#1976D2' }}
+        />
+        <Title style={profileStyles.name}>{currentUser.name}</Title>
+        <Text style={profileStyles.email}>{currentUser.email}</Text>
+      </View>
+      
+      <Card style={profileStyles.card}>
+        <Card.Content>
+          <List.Item
+            title="Daily Study Goal"
+            description={`${currentUser.dailyStudyGoal} minutes`}
+            left={props => <List.Icon {...props} icon="timer" />}
+          />
+          <List.Item
+            title="Notifications"
+            description={currentUser.notificationsEnabled ? 'Enabled' : 'Disabled'}
+            left={props => <List.Icon {...props} icon="bell" />}
+          />
+        </Card.Content>
+      </Card>
+    </ScrollView>
+  );
+};
+
 const CategoryDetailScreen = () => <PlaceholderScreen title="Category Details" />;
 const SettingsScreen = () => <PlaceholderScreen title="Settings" />;
 const QuestionDetailScreen = () => <PlaceholderScreen title="Question Details" />;
@@ -78,6 +143,37 @@ const placeholderStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     color: '#666',
+  },
+});
+
+const profileStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  name: {
+    marginTop: 10,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  email: {
+    fontSize: 16,
+    color: '#666',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 });
 
@@ -107,9 +203,20 @@ const MainTabs = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#1976D2',
-        tabBarInactiveTintColor: 'gray',
-        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTintColor: colors.textOnPrimary,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -120,13 +227,112 @@ const MainTabs = () => {
   );
 };
 
+// Debug UI Component
+const DebugUI = () => {
+  // Only show in development mode
+  if (!__DEV__) return null;
+  
+  const dispatch = useDispatch();
+  const categories = useSelector((state: RootState) => state.questions.categories);
+  const questions = useSelector((state: RootState) => state.questions.questions);
+  
+  const handleManualSeed = async () => {
+    try {
+      console.log('Manual seed triggered');
+      await seedDatabase();
+      
+      // Reload data from database to Redux
+      dispatch(loadCategories() as any);
+      dispatch(loadAllQuestions() as any);
+    } catch (error) {
+      console.error('Manual seed error:', error);
+    }
+  };
+
+  const handleClearAndReseed = async () => {
+    try {
+      console.log('Clear and reseed triggered');
+      
+      // Re-initialize database (this will recreate tables if needed)
+      const db = DatabaseService.getInstance();
+      await db.initializeDatabase();
+      
+      // Force reseed - seedDatabase will check if empty
+      await seedDatabase();
+      
+      // Reload data from database to Redux
+      dispatch(loadCategories() as any);
+      dispatch(loadAllQuestions() as any);
+      
+      console.log('Clear and reseed completed');
+    } catch (error) {
+      console.error('Clear and reseed error:', error);
+    }
+  };
+
+  return (
+    <View style={{
+      position: 'absolute',
+      top: 50,
+      right: 10,
+      backgroundColor: colors.accentLight,
+      padding: 10,
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      zIndex: 1000,
+    }}>
+      <Text style={{ fontWeight: 'bold', color: colors.textOnAccent, fontSize: 12 }}>
+        Categories: {categories.length}
+      </Text>
+      <Text style={{ color: colors.textOnAccent, fontSize: 12 }}>
+        Questions: {questions.length}
+      </Text>
+      <TouchableOpacity
+        onPress={handleManualSeed}
+        style={{
+          marginTop: 5,
+          backgroundColor: colors.success,
+          padding: 5,
+          borderRadius: 3,
+        }}
+      >
+                  <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
+            Force Seed Database
+          </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={handleClearAndReseed}
+        style={{
+          marginTop: 5,
+          backgroundColor: colors.error,
+          padding: 5,
+          borderRadius: 3,
+        }}
+      >
+                  <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
+            Clear & Reseed
+          </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const App = () => {
+  console.log('========== APP STARTING ==========');
+  
   const lightTheme = {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
-      primary: '#1976D2',
-      accent: '#FF9800',
+      primary: colors.primary,
+      accent: colors.accent,
+      background: colors.background,
+      surface: colors.surface,
+      text: colors.textPrimary,
+      placeholder: colors.textSecondary,
+      error: colors.error,
+      notification: colors.accent,
     },
   };
 
@@ -134,8 +340,14 @@ const App = () => {
     ...MD3DarkTheme,
     colors: {
       ...MD3DarkTheme.colors,
-      primary: '#1976D2',
-      accent: '#FF9800',
+      primary: colors.primary,
+      accent: colors.accent,
+      background: colors.background,
+      surface: colors.surface,
+      text: colors.textPrimary,
+      placeholder: colors.textSecondary,
+      error: colors.error,
+      notification: colors.accent,
     },
   };
 
@@ -145,6 +357,29 @@ const App = () => {
         // Initialize database
         const db = DatabaseService.getInstance();
         await db.initializeDatabase();
+
+        // Seed database with initial data if empty
+        const categories = await db.getCategories();
+        console.log('App initialization - Categories found:', categories.length);
+        
+        if (!categories || categories.length === 0) {
+          console.log('Database is empty, seeding with initial data...');
+          await seedDatabase();
+          
+          // Verify seeding worked
+          const verifyCategories = await db.getCategories();
+          const verifyQuestions = await db.getAllQuestions();
+          console.log('After seeding - Categories:', verifyCategories.length, 'Questions:', verifyQuestions.length);
+        } else {
+          // Check if we have questions
+          const allQuestions = await db.getAllQuestions();
+          console.log('Existing database - Questions found:', allQuestions.length);
+        }
+
+        // Load data into Redux store
+        console.log('Loading data into Redux store...');
+        store.dispatch(loadCategories() as any);
+        store.dispatch(loadAllQuestions() as any);
 
         // Load user settings
         store.dispatch(loadSettingsFromStorage() as any);
@@ -167,64 +402,73 @@ const App = () => {
     <Provider store={store}>
       <NetworkProvider>
         <PaperProvider theme={lightTheme}>
-          <StatusBar barStyle="dark-content" backgroundColor="#1976D2" />
-          <NavigationContainer>
-            <Stack.Navigator
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: '#1976D2',
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
-              }}
-            >
-              <Stack.Screen 
-                name="Main" 
-                component={MainTabs} 
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="Test" 
-                component={TestScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="TestResults" 
-                component={TestResultsScreen}
-                options={{ title: 'Test Results' }}
-              />
-              <Stack.Screen 
-                name="StudyMode" 
-                component={StudyModeScreen}
-                options={{ title: 'Study Mode' }}
-              />
-              <Stack.Screen 
-                name="MockExamSetup" 
-                component={MockExamSetupScreen}
-                options={{ title: 'Mock Exam Setup' }}
-              />
-              <Stack.Screen 
-                name="CategoryDetail" 
-                component={CategoryDetailScreen}
-                options={{ title: 'Category Details' }}
-              />
-              <Stack.Screen 
-                name="Settings" 
-                component={SettingsScreen}
-                options={{ title: 'Settings' }}
-              />
-              <Stack.Screen 
-                name="QuestionDetail" 
-                component={QuestionDetailScreen}
-                options={{ title: 'Question Details' }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
+          <AppContent />
         </PaperProvider>
       </NetworkProvider>
     </Provider>
+  );
+};
+
+const AppContent = () => {
+  return (
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor="#1976D2" />
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#1976D2',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        >
+          <Stack.Screen 
+            name="Main" 
+            component={MainTabs} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Test" 
+            component={TestScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="TestResults" 
+            component={TestResultsScreen}
+            options={{ title: 'Test Results' }}
+          />
+          <Stack.Screen 
+            name="StudyMode" 
+            component={StudyModeScreen}
+            options={{ title: 'Study Mode' }}
+          />
+          <Stack.Screen 
+            name="MockExamSetup" 
+            component={MockExamSetupScreen}
+            options={{ title: 'Mock Exam Setup' }}
+          />
+          <Stack.Screen 
+            name="CategoryDetail" 
+            component={CategoryDetailScreen}
+            options={{ title: 'Category Details' }}
+          />
+          <Stack.Screen 
+            name="Settings" 
+            component={SettingsScreen}
+            options={{ title: 'Settings' }}
+          />
+          <Stack.Screen 
+            name="QuestionDetail" 
+            component={QuestionDetailScreen}
+            options={{ title: 'Question Details' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <DebugUI />
+    </>
   );
 };
 
