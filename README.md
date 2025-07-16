@@ -1,97 +1,133 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# NDT Exam Prep Mobile App
 
-# Getting Started
+A comprehensive React Native application for Non-Destructive Testing (NDT) Level III exam preparation.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- 📚 **1000+ Practice Questions**: Extensive question bank covering all NDT methods
+- 🎯 **Multiple Test Modes**: Practice tests, mock exams, and study mode
+- 📊 **Progress Tracking**: Detailed analytics and performance metrics
+- 🏷️ **Bookmarking**: Save questions for later review
+- ⏱️ **Timer Functionality**: Simulate real exam conditions
+- 📐 **Formula Support**: LaTeX rendering for mathematical formulas
+- 🖼️ **Image Support**: Questions with diagrams and illustrations
+- 📱 **Offline Mode**: Study anywhere without internet connection
+- 🎨 **Modern UI**: Material Design with smooth animations
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- React Native 0.80.1
+- TypeScript
+- Redux Toolkit for state management
+- SQLite for local database
+- React Navigation for routing
+- React Native Paper for UI components
+- React Native Katex for formula rendering
 
-```sh
-# Using npm
-npm start
+## Prerequisites
 
-# OR using Yarn
-yarn start
+- Node.js 18+
+- Java JDK 17+ (JDK 21 recommended)
+- Android Studio with Android SDK
+- USB Debugging enabled on your Android device
+
+## Installation
+
+1. Clone the repository and navigate to the project:
+```bash
+cd /Users/michael.belcher/Downloads/ndt-exam-prep/NDTExamPrep
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+2. Install dependencies:
+```bash
+npm install
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+3. Set up environment variables:
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME=~/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools
 ```
 
-Then, and every time you update your native dependencies, run:
+4. Connect your Android device with USB debugging enabled
 
-```sh
-bundle exec pod install
+5. Build and run the app:
+```bash
+npx react-native run-android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Project Structure
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```
+src/
+├── models/          # TypeScript interfaces and types
+├── screens/         # React Native screen components
+├── services/        # Database and API services
+├── store/           # Redux store and slices
+└── data/           # Question bank and seed data
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Database Schema
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+The app uses SQLite with the following tables:
+- users
+- questions
+- categories
+- user_progress
+- test_sessions
+- test_responses
+- bookmarks
+- study_sessions
+- achievements
+- user_achievements
+- user_settings
 
-## Step 3: Modify your app
+## Available Screens
 
-Now that you have successfully run the app, let's make changes!
+1. **Home Screen**: Main navigation hub
+2. **Test Screen**: Take practice tests
+3. **Study Mode**: Browse questions by category
+4. **Mock Exam Setup**: Configure full-length exams
+5. **Progress Screen**: View statistics and achievements
+6. **Results Screen**: Detailed test results
+7. **Categories Screen**: Browse questions by NDT method
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Development
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+To start the Metro bundler:
+```bash
+npx react-native start
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+To run on Android:
+```bash
+npx react-native run-android
+```
 
-## Congratulations! :tada:
+To run on iOS (macOS only):
+```bash
+cd ios && pod install
+npx react-native run-ios
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+## Troubleshooting
 
-### Now what?
+### Java Version Issues
+Ensure you're using JDK 17 or higher:
+```bash
+java -version
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### ADB Not Found
+Add Android SDK tools to your PATH:
+```bash
+export PATH=$PATH:~/Library/Android/sdk/platform-tools
+```
 
-# Troubleshooting
+### Device Not Authorized
+Check your device for the "Allow USB debugging?" prompt and accept it.
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## License
 
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+This project is proprietary software for NDT exam preparation.
