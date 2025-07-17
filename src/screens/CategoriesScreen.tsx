@@ -1,12 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Card, Title, Paragraph, ProgressBar, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,15 +9,15 @@ import { loadCategories } from '@store/slices/questionSlice';
 const { width } = Dimensions.get('window');
 
 const CategoriesScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-  
+
   const { categories } = useAppSelector((state) => state.questions);
   const { categoryProgress } = useAppSelector((state) => state.progress);
 
   useEffect(() => {
     console.log('CategoriesScreen: Loading categories...');
-    dispatch(loadCategories() as any);
+    dispatch(loadCategories());
   }, [dispatch]);
 
   useEffect(() => {
@@ -34,7 +27,7 @@ const CategoriesScreen: React.FC = () => {
   const getCategoryProgress = (categoryId: string) => {
     const progress = categoryProgress[categoryId];
     if (!progress) return 0;
-    return (progress.questionsAnswered / progress.totalQuestions) || 0;
+    return progress.questionsAnswered / progress.totalQuestions || 0;
   };
 
   const getCategoryScore = (categoryId: string) => {
@@ -44,19 +37,22 @@ const CategoriesScreen: React.FC = () => {
   };
 
   const handleCategoryPress = (categoryId: string) => {
-    navigation.navigate('CategoryDetail' as never, { categoryId } as never);
+    navigation.navigate('CategoryDetail' as any, { categoryId });
   };
 
   const handleStartPractice = (categoryId: string) => {
-    navigation.navigate('Test' as never, { 
-      testType: 'category',
-      categoryId,
-      timeLimit: 0,
-    } as never);
+    navigation.navigate(
+      'Test' as any,
+      {
+        testType: 'category',
+        categoryId,
+        timeLimit: 0,
+      },
+    );
   };
 
   const handleStartStudy = (categoryId: string) => {
-    navigation.navigate('StudyMode' as never, { categoryId } as never);
+    navigation.navigate('StudyMode' as any, { categoryId })
   };
 
   return (
@@ -74,7 +70,7 @@ const CategoriesScreen: React.FC = () => {
         {categories.map((category) => {
           const progress = getCategoryProgress(category.id);
           const score = getCategoryScore(category.id);
-          
+
           return (
             <TouchableOpacity
               key={category.id}
@@ -106,13 +102,11 @@ const CategoriesScreen: React.FC = () => {
                   <View style={styles.progressSection}>
                     <View style={styles.progressHeader}>
                       <Text style={styles.progressLabel}>Progress</Text>
-                      <Text style={styles.progressPercentage}>
-                        {(progress * 100).toFixed(0)}%
-                      </Text>
+                      <Text style={styles.progressPercentage}>{(progress * 100).toFixed(0)}%</Text>
                     </View>
-                    <ProgressBar 
-                      progress={progress} 
-                      color={category.color} 
+                    <ProgressBar
+                      progress={progress}
+                      color={category.color}
                       style={styles.progressBar}
                     />
                   </View>
@@ -120,15 +114,14 @@ const CategoriesScreen: React.FC = () => {
                   {/* Score Display */}
                   {score !== null && (
                     <View style={styles.scoreSection}>
-                      <Icon 
-                        name="chart-line" 
-                        size={16} 
-                        color={score >= 70 ? '#4CAF50' : '#FF9800'} 
+                      <Icon
+                        name="chart-line"
+                        size={16}
+                        color={score >= 70 ? '#4CAF50' : '#FF9800'}
                       />
-                      <Text style={[
-                        styles.scoreText,
-                        { color: score >= 70 ? '#4CAF50' : '#FF9800' }
-                      ]}>
+                      <Text
+                        style={[styles.scoreText, { color: score >= 70 ? '#4CAF50' : '#FF9800' }]}
+                      >
                         Average Score: {score.toFixed(0)}%
                       </Text>
                     </View>
@@ -136,7 +129,7 @@ const CategoriesScreen: React.FC = () => {
 
                   {/* Action Buttons */}
                   <View style={styles.actionButtons}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.actionButton, { backgroundColor: category.color + '20' }]}
                       onPress={() => handleStartStudy(category.id)}
                     >
@@ -145,8 +138,8 @@ const CategoriesScreen: React.FC = () => {
                         Study
                       </Text>
                     </TouchableOpacity>
-                    
-                    <TouchableOpacity 
+
+                    <TouchableOpacity
                       style={[styles.actionButton, styles.practiceButton]}
                       onPress={() => handleStartPractice(category.id)}
                     >
@@ -170,7 +163,7 @@ const CategoriesScreen: React.FC = () => {
             <Icon name="certificate" size={24} color="#1976D2" />
             <Title style={styles.summaryTitle}>Overall Progress</Title>
           </View>
-          
+
           <View style={styles.summaryStats}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>
@@ -178,28 +171,32 @@ const CategoriesScreen: React.FC = () => {
               </Text>
               <Text style={styles.statLabel}>Total Questions</Text>
             </View>
-            
+
             <View style={styles.statDivider} />
-            
+
             <View style={styles.statItem}>
               <Text style={styles.statValue}>
                 {Object.values(categoryProgress).reduce(
-                  (sum, prog) => sum + prog.questionsAnswered, 0
+                  (sum, prog) => sum + prog.questionsAnswered,
+                  0,
                 )}
               </Text>
               <Text style={styles.statLabel}>Answered</Text>
             </View>
-            
+
             <View style={styles.statDivider} />
-            
+
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: '#4CAF50' }]}>
                 {(
                   (Object.values(categoryProgress).reduce(
-                    (sum, prog) => sum + prog.questionsAnswered, 0
-                  ) / 
-                  categories.reduce((sum, cat) => sum + cat.totalQuestions, 0)) * 100
-                ).toFixed(0)}%
+                    (sum, prog) => sum + prog.questionsAnswered,
+                    0,
+                  ) /
+                    categories.reduce((sum, cat) => sum + cat.totalQuestions, 0)) *
+                  100
+                ).toFixed(0)}
+                %
               </Text>
               <Text style={styles.statLabel}>Complete</Text>
             </View>
@@ -370,4 +367,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CategoriesScreen; 
+export default CategoriesScreen;

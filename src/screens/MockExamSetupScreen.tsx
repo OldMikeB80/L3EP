@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Card, Title, Paragraph, Button, RadioButton, Chip, Switch, List } from 'react-native-paper';
+import {
+  Card,
+  Title,
+  Paragraph,
+  Button,
+  RadioButton,
+  Chip,
+  Switch,
+  List,
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppDispatch, useAppSelector } from '@store/store';
 import { startTestSession } from '@store/slices/testSlice';
@@ -46,23 +49,25 @@ const MockExamSetupScreen: React.FC = () => {
   const handleStartExam = async () => {
     // Create a default user if none exists (temporary for testing)
     const userId = currentUser?.id || 'default-user';
-    
+
     Alert.alert(
       'Start Mock Exam',
       `You are about to start a ${config.numberOfQuestions}-question mock exam with a ${config.timeLimit}-minute time limit. Are you ready?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Start', 
+        {
+          text: 'Start',
           onPress: async () => {
             try {
-              await dispatch(startTestSession({
-                type: 'mock',
-                numberOfQuestions: config.numberOfQuestions,
-                timeLimit: config.timeLimit,
-                userId: userId,
-              })).unwrap();
-              
+              await dispatch(
+                startTestSession({
+                  type: 'mock',
+                  numberOfQuestions: config.numberOfQuestions,
+                  timeLimit: config.timeLimit,
+                  userId: userId,
+                }),
+              ).unwrap();
+
               (navigation as any).navigate('Test', {
                 testType: 'mock',
                 timeLimit: config.timeLimit,
@@ -70,14 +75,14 @@ const MockExamSetupScreen: React.FC = () => {
             } catch (error) {
               Alert.alert('Error', 'Failed to start mock exam');
             }
-          }
+          },
         },
-      ]
+      ],
     );
   };
 
   const updateQuestionCount = (value: number) => {
-    const option = questionOptions.find(opt => opt.value === value);
+    const option = questionOptions.find((opt) => opt.value === value);
     if (option) {
       setConfig({
         ...config,
@@ -97,9 +102,8 @@ const MockExamSetupScreen: React.FC = () => {
             <Title style={styles.infoTitle}>ASNT Level III Mock Exam</Title>
           </View>
           <Paragraph style={styles.infoText}>
-            This mock exam simulates the actual ASNT NDT Level III Basic examination. 
-            The full exam consists of 150 questions to be completed in 4 hours, with a 
-            passing score of 70%.
+            This mock exam simulates the actual ASNT NDT Level III Basic examination. The full exam
+            consists of 150 questions to be completed in 4 hours, with a passing score of 70%.
           </Paragraph>
         </Card.Content>
       </Card>
@@ -108,10 +112,10 @@ const MockExamSetupScreen: React.FC = () => {
       <Card style={styles.configCard}>
         <Card.Content>
           <Title style={styles.sectionTitle}>Exam Configuration</Title>
-          
+
           {/* Question Count Selection */}
           <List.Subheader style={styles.subheader}>Number of Questions</List.Subheader>
-          <RadioButton.Group 
+          <RadioButton.Group
             onValueChange={(value) => updateQuestionCount(Number(value))}
             value={config.numberOfQuestions.toString()}
           >
@@ -173,13 +177,13 @@ const MockExamSetupScreen: React.FC = () => {
       <Card style={styles.summaryCard}>
         <Card.Content>
           <Title style={styles.sectionTitle}>Exam Summary</Title>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="help-circle" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Questions:</Text>
             <Text style={styles.summaryValue}>{config.numberOfQuestions}</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="timer" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Time Limit:</Text>
@@ -187,13 +191,13 @@ const MockExamSetupScreen: React.FC = () => {
               {Math.floor(config.timeLimit / 60)}h {config.timeLimit % 60}m
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="target" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Passing Score:</Text>
             <Text style={styles.summaryValue}>70%</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="puzzle" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Difficulty:</Text>
@@ -211,53 +215,40 @@ const MockExamSetupScreen: React.FC = () => {
             <Icon name="lightbulb" size={24} color="#FFC107" />
             <Title style={styles.tipsTitle}>Exam Tips</Title>
           </View>
-          
+
           <View style={styles.tipItem}>
             <Icon name="clock-fast" size={16} color="#666" />
             <Text style={styles.tipText}>
               Pace yourself - aim for about 1.5 minutes per question
             </Text>
           </View>
-          
+
           <View style={styles.tipItem}>
             <Icon name="bookmark-outline" size={16} color="#666" />
-            <Text style={styles.tipText}>
-              Flag difficult questions and return to them later
-            </Text>
+            <Text style={styles.tipText}>Flag difficult questions and return to them later</Text>
           </View>
-          
+
           <View style={styles.tipItem}>
             <Icon name="eye-check" size={16} color="#666" />
             <Text style={styles.tipText}>
               Read each question carefully before selecting an answer
             </Text>
           </View>
-          
+
           <View style={styles.tipItem}>
             <Icon name="calculator" size={16} color="#666" />
-            <Text style={styles.tipText}>
-              Have a calculator ready for numerical questions
-            </Text>
+            <Text style={styles.tipText}>Have a calculator ready for numerical questions</Text>
           </View>
         </Card.Content>
       </Card>
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <Button
-          mode="outlined"
-          onPress={() => navigation.goBack()}
-          style={styles.cancelButton}
-        >
+        <Button mode="outlined" onPress={() => navigation.goBack()} style={styles.cancelButton}>
           Cancel
         </Button>
-        
-        <Button
-          mode="contained"
-          onPress={handleStartExam}
-          style={styles.startButton}
-          icon="play"
-        >
+
+        <Button mode="contained" onPress={handleStartExam} style={styles.startButton} icon="play">
           Start Exam
         </Button>
       </View>
@@ -417,4 +408,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MockExamSetupScreen; 
+export default MockExamSetupScreen;

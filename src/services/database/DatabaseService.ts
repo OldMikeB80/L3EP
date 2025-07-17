@@ -24,7 +24,7 @@ export class DatabaseService {
         name: 'NDTExamPrep.db',
         location: 'default',
       });
-      
+
       await this.createTables();
       await this.checkAndUpdateDatabase();
     } catch (error) {
@@ -226,18 +226,18 @@ export class DatabaseService {
         ORDER BY difficulty
         ${limit ? 'LIMIT ?' : ''}
       `;
-      
+
       const params = limit ? [categoryId, limit] : [categoryId];
       const results = await this.database.executeSql(questionsQuery, params);
-      
+
       const questions: Question[] = [];
       for (let i = 0; i < results[0].rows.length; i++) {
         const row = results[0].rows.item(i);
-        
+
         // Get options for this question
         const optionsQuery = `SELECT * FROM options WHERE question_id = ? ORDER BY option_order`;
         const optionsResults = await this.database.executeSql(optionsQuery, [row.id]);
-        
+
         const options = [];
         for (let j = 0; j < optionsResults[0].rows.length; j++) {
           const optionRow = optionsResults[0].rows.item(j);
@@ -247,7 +247,7 @@ export class DatabaseService {
             imageUrl: optionRow.image_url,
           });
         }
-        
+
         questions.push({
           id: row.id,
           categoryId: row.category_id,
@@ -265,7 +265,7 @@ export class DatabaseService {
           updatedAt: row.updated_at,
         });
       }
-      
+
       return questions;
     } catch (error) {
       console.error('Error fetching questions by category:', error);
@@ -297,17 +297,21 @@ export class DatabaseService {
 
   private parseQuestions(result: any): Question[] {
     const questions: Question[] = [];
-    
+
     for (let i = 0; i < result.rows.length; i++) {
       const row = result.rows.item(i);
-      const options = row.options_json ? 
-        row.options_json.split(',').map((opt: string) => {
-          try {
-            return JSON.parse(opt);
-          } catch {
-            return null;
-          }
-        }).filter(Boolean) : [];
+      const options = row.options_json
+        ? row.options_json
+            .split(',')
+            .map((opt: string) => {
+              try {
+                return JSON.parse(opt);
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean)
+        : [];
 
       questions.push({
         id: row.id,
@@ -405,12 +409,15 @@ export class DatabaseService {
   }
 
   // Analytics operations
-  public async recordDailyAnalytics(userId: string, data: {
-    studyTime: number;
-    questionsAttempted: number;
-    questionsCorrect: number;
-    categoriesStudied: string[];
-  }): Promise<void> {
+  public async recordDailyAnalytics(
+    userId: string,
+    data: {
+      studyTime: number;
+      questionsAttempted: number;
+      questionsCorrect: number;
+      categoriesStudied: string[];
+    },
+  ): Promise<void> {
     if (!this.database) throw new Error('Database not initialized');
 
     const today = new Date().toISOString().split('T')[0];
@@ -432,12 +439,36 @@ export class DatabaseService {
   }
 
   private async checkAndUpdateDatabase(): Promise<void> {
-    // Check for database version and apply migrations if needed
-    // This is where you'd handle database updates between app versions
+    const CURRENT_SCHEMA_VERSION = 1;
+    
+    if (!this.database) throw new Error('Database not initialized');
+    
+    // Get current database version
+    const [res] = await this.database.executeSql('PRAGMA user_version;');
+    const current = res.rows.item(0).user_version as number;
+    
+    if (current < CURRENT_SCHEMA_VERSION) {
+      await this.runMigrations(current);
+      await this.database.executeSql(`PRAGMA user_version = ${CURRENT_SCHEMA_VERSION};`);
+    }
+  }
+  
+  private async runMigrations(fromVersion: number): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+    
+    // Add migration logic here as the database evolves
+    // Example:
+    // if (fromVersion < 1) {
+    //   await this.database.executeSql('ALTER TABLE questions ADD COLUMN new_field TEXT;');
+    // }
   }
 
   private generateId(): string {
     return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
+  private generatePlaceholders(count: number): string {
+    return new Array(count).fill('?').join(', ');
   }
 
   public async close(): Promise<void> {
@@ -450,17 +481,14 @@ export class DatabaseService {
   // Stub methods to fix TypeScript errors - implement these later
   public async getUser(userId: string): Promise<User | null> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
-      const results = await this.database.executeSql(
-        'SELECT * FROM users WHERE id = ?',
-        [userId]
-      );
-      
+      const results = await this.database.executeSql('SELECT * FROM users WHERE id = ?', [userId]);
+
       if (results[0].rows.length === 0) {
         return null;
       }
-      
+
       const userData = results[0].rows.item(0);
       return {
         ...userData,
@@ -475,23 +503,80 @@ export class DatabaseService {
     }
   }
 
-  public async updateUserProgress(categoryId: string, progress: any): Promise<void> {
-    // TODO: Implement
+  public async getUserProgress(userId: string): Promise<UserProgress[]> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      const results = await this.database.executeSql(
+        `SELECT * FROM user_progress WHERE user_id = ?`,
+        [userId],
+      );
+
+      const progress: UserProgress[] = [];
+      for (let i = 0; i < results[0].rows.length; i++) {
+        const row = results[0].rows.item(i);
+        progress.push({
+          userId: row.user_id,
+          categoryId: row.category_id,
+          totalQuestions: row.total_questions,
+          questionsAnswered: row.questions_attempted,
+          correctAnswers: row.questions_correct,
+          averageScore: row.average_score,
+          lastStudyDate: row.last_attempt_date,
+          studyStreak: row.study_streak || 0,
+          totalStudyTime: row.average_time_per_question || 0,
+          weakAreas: JSON.parse(row.weak_areas || '[]'),
+          strongAreas: JSON.parse(row.strong_areas || '[]'),
+        });
+      }
+
+      return progress;
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+      return [];
+    }
+  }
+
+  public async updateUserProgress(userId: string, categoryId: string, progress: UserProgress): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      await this.database.executeSql(
+        `INSERT OR REPLACE INTO user_progress (
+          id, user_id, category_id, questions_attempted, questions_correct,
+          average_score, average_time_per_question, last_attempt_date,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          this.generateId(),
+          userId,
+          categoryId,
+          progress.questionsAnswered,
+          progress.correctAnswers,
+          progress.averageScore,
+          progress.totalStudyTime,
+          progress.lastStudyDate,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+      );
+    } catch (error) {
+      console.error('Error updating user progress:', error);
+      throw error;
+    }
   }
 
   public async getCategories(): Promise<Category[]> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
-      const results = await this.database.executeSql(
-        'SELECT * FROM categories ORDER BY name'
-      );
-      
+      const results = await this.database.executeSql('SELECT * FROM categories ORDER BY name');
+
       const categories: Category[] = [];
       for (let i = 0; i < results[0].rows.length; i++) {
         categories.push(results[0].rows.item(i));
       }
-      
+
       return categories;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -499,28 +584,26 @@ export class DatabaseService {
     }
   }
 
-
-
   public async getAllQuestions(): Promise<Question[]> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
       console.log('DatabaseService: Getting all questions...');
-      
+
       // First get all questions
       const questionsQuery = `SELECT * FROM questions ORDER BY category_id, difficulty`;
       const results = await this.database.executeSql(questionsQuery);
       console.log('DatabaseService: Questions query executed, rows found:', results[0].rows.length);
-      
+
       const questions: Question[] = [];
-      
+
       for (let i = 0; i < results[0].rows.length; i++) {
         const row = results[0].rows.item(i);
-        
+
         // Get options for this question
         const optionsQuery = `SELECT * FROM options WHERE question_id = ? ORDER BY option_order`;
         const optionsResults = await this.database.executeSql(optionsQuery, [row.id]);
-        
+
         const options = [];
         for (let j = 0; j < optionsResults[0].rows.length; j++) {
           const optionRow = optionsResults[0].rows.item(j);
@@ -530,7 +613,7 @@ export class DatabaseService {
             imageUrl: optionRow.image_url,
           });
         }
-        
+
         questions.push({
           id: row.id,
           categoryId: row.category_id,
@@ -548,7 +631,7 @@ export class DatabaseService {
           updatedAt: row.updated_at,
         });
       }
-      
+
       console.log('DatabaseService: Returning questions:', questions.length);
       return questions;
     } catch (error) {
@@ -558,24 +641,12 @@ export class DatabaseService {
   }
 
   public async searchQuestions(query: string): Promise<Question[]> {
-    // TODO: Implement search functionality
-    return [];
-  }
-
-  public async toggleBookmark(userId: string, questionId: string): Promise<void> {
-    // TODO: Implement
-  }
-
-  public async getWeakAreaQuestions(userId: string, limit: number): Promise<Question[]> {
-    return [];
-  }
-
-  public async getRandomQuestions(limit: number): Promise<Question[]> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
-      const query = `
-        SELECT q.*, GROUP_CONCAT(
+      const searchPattern = `%${query}%`;
+      const results = await this.database.executeSql(
+        `SELECT q.*, GROUP_CONCAT(
           json_object(
             'id', o.id,
             'text', o.text,
@@ -584,13 +655,12 @@ export class DatabaseService {
         ) as options_json
         FROM questions q
         LEFT JOIN options o ON q.id = o.question_id
+        WHERE q.question LIKE ? OR q.explanation LIKE ? OR q.tags LIKE ?
         GROUP BY q.id
-        ORDER BY RANDOM()
-        LIMIT ?
-      `;
-      
-      const results = await this.database.executeSql(query, [limit]);
-      
+        ORDER BY q.created_at DESC`,
+        [searchPattern, searchPattern, searchPattern],
+      );
+
       const questions: Question[] = [];
       for (let i = 0; i < results[0].rows.length; i++) {
         const row = results[0].rows.item(i);
@@ -608,7 +678,86 @@ export class DatabaseService {
           updatedAt: row.updated_at,
         });
       }
-      
+
+      return questions;
+    } catch (error) {
+      console.error('Error searching questions:', error);
+      return [];
+    }
+  }
+
+  public async toggleBookmark(userId: string, questionId: string): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      // Check if bookmark exists
+      const checkResult = await this.database.executeSql(
+        'SELECT id FROM bookmarks WHERE user_id = ? AND question_id = ?',
+        [userId, questionId],
+      );
+
+      if (checkResult[0].rows.length > 0) {
+        // Remove bookmark
+        await this.database.executeSql(
+          'DELETE FROM bookmarks WHERE user_id = ? AND question_id = ?',
+          [userId, questionId],
+        );
+      } else {
+        // Add bookmark
+        await this.database.executeSql(
+          'INSERT INTO bookmarks (id, user_id, question_id, created_at) VALUES (?, ?, ?, ?)',
+          [this.generateId(), userId, questionId, new Date().toISOString()],
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      throw error;
+    }
+  }
+
+  public async getWeakAreaQuestions(userId: string, limit: number): Promise<Question[]> {
+    return [];
+  }
+
+  public async getRandomQuestions(limit: number): Promise<Question[]> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      const query = `
+        SELECT q.*, GROUP_CONCAT(
+          json_object(
+            'id', o.id,
+            'text', o.text,
+            'imageUrl', o.image_url
+          )
+        ) as options_json
+        FROM questions q
+        LEFT JOIN options o ON q.id = o.question_id
+        GROUP BY q.id
+        ORDER BY RANDOM()
+        LIMIT ?
+      `;
+
+      const results = await this.database.executeSql(query, [limit]);
+
+      const questions: Question[] = [];
+      for (let i = 0; i < results[0].rows.length; i++) {
+        const row = results[0].rows.item(i);
+        questions.push({
+          ...row,
+          categoryId: row.category_id,
+          subcategoryId: row.subcategory_id,
+          correctAnswer: row.correct_answer,
+          imageUrl: row.image_url,
+          formulaLatex: row.formula_latex,
+          references: JSON.parse(row.reference_texts || '[]'),
+          tags: JSON.parse(row.tags || '[]'),
+          options: row.options_json ? JSON.parse(`[${row.options_json}]`) : [],
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        });
+      }
+
       return questions;
     } catch (error) {
       console.error('Error fetching random questions:', error);
@@ -616,15 +765,79 @@ export class DatabaseService {
     }
   }
 
-  public async updateTestAnswer(sessionId: string, questionId: string, answer: any): Promise<void> {
-    // TODO: Implement
+  public async updateTestAnswer(sessionId: string, questionId: string, answer: TestQuestion): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      await this.database.executeSql(
+        `INSERT OR REPLACE INTO test_questions (
+          id, session_id, question_id, user_answer, is_correct,
+          time_spent, is_bookmarked, confidence, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          this.generateId(),
+          sessionId,
+          questionId,
+          answer.userAnswer || null,
+          answer.isCorrect ? 1 : 0,
+          answer.timeSpent,
+          answer.isBookmarked ? 1 : 0,
+          answer.confidence || null,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+      );
+    } catch (error) {
+      console.error('Error updating test answer:', error);
+      throw error;
+    }
   }
 
-  public async updateTestSession(sessionId: string, updates: any): Promise<void> {
-    // TODO: Implement
+  public async updateTestSession(sessionId: string, updates: Partial<TestSession>): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+
+      if (updates.endTime !== undefined) {
+        fields.push('end_time = ?');
+        values.push(updates.endTime);
+      }
+      if (updates.duration !== undefined) {
+        fields.push('duration = ?');
+        values.push(updates.duration);
+      }
+      if (updates.correctAnswers !== undefined) {
+        fields.push('correct_answers = ?');
+        values.push(updates.correctAnswers);
+      }
+      if (updates.score !== undefined) {
+        fields.push('score = ?');
+        values.push(updates.score);
+      }
+      if (updates.completed !== undefined) {
+        fields.push('completed = ?');
+        values.push(updates.completed ? 1 : 0);
+      }
+      if (updates.timedOut !== undefined) {
+        fields.push('timed_out = ?');
+        values.push(updates.timedOut ? 1 : 0);
+      }
+
+      if (fields.length === 0) return;
+
+      fields.push('updated_at = ?');
+      values.push(new Date().toISOString());
+      values.push(sessionId);
+
+      const query = `UPDATE test_sessions SET ${fields.join(', ')} WHERE id = ?`;
+      await this.database.executeSql(query, values);
+    } catch (error) {
+      console.error('Error updating test session:', error);
+      throw error;
+    }
   }
-
-
 
   public async getWeeklyStats(userId: string): Promise<any> {
     return {};
@@ -632,7 +845,7 @@ export class DatabaseService {
 
   public async insertCategory(category: Category): Promise<void> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
       console.log('Executing insertCategory SQL for:', category.name);
       const result = await this.database.executeSql(
@@ -647,7 +860,7 @@ export class DatabaseService {
           category.color,
           category.totalQuestions,
           category.requiredPassPercentage,
-        ]
+        ],
       );
       console.log('Insert category result:', result);
     } catch (error) {
@@ -657,9 +870,62 @@ export class DatabaseService {
     }
   }
 
+  public async insertQuestionsBulk(questions: Question[]): Promise<void> {
+    if (!this.database) throw new Error('Database not initialized');
+
+    try {
+      await this.database.transaction(async (tx) => {
+        for (const question of questions) {
+          await tx.executeSql(
+            `INSERT OR REPLACE INTO questions (
+              id, category_id, subcategory_id, question, correct_answer,
+              explanation, difficulty, image_url, formula_latex, 
+              reference_texts, tags, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              question.id,
+              question.categoryId,
+              question.subcategoryId || null,
+              question.question,
+              question.correctAnswer,
+              question.explanation,
+              question.difficulty,
+              question.imageUrl || null,
+              question.formulaLatex || null,
+              JSON.stringify(question.references || []),
+              JSON.stringify(question.tags || []),
+              question.createdAt,
+              question.updatedAt,
+            ],
+          );
+
+          // Insert options
+          for (const option of question.options) {
+            await tx.executeSql(
+              `INSERT OR REPLACE INTO options (
+                id, question_id, text, image_url, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?)`,
+              [
+                option.id,
+                question.id,
+                option.text,
+                option.imageUrl || null,
+                new Date().toISOString(),
+                new Date().toISOString(),
+              ],
+            );
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error inserting questions in bulk:', error);
+      throw error;
+    }
+  }
+
   public async insertQuestion(question: Question): Promise<void> {
     if (!this.database) throw new Error('Database not initialized');
-    
+
     try {
       // Insert question
       await this.database.executeSql(
@@ -682,7 +948,7 @@ export class DatabaseService {
           JSON.stringify(question.tags || []),
           question.createdAt,
           question.updatedAt,
-        ]
+        ],
       );
 
       // Insert options
@@ -692,13 +958,7 @@ export class DatabaseService {
           `INSERT OR REPLACE INTO options (
             id, question_id, text, image_url, option_order
           ) VALUES (?, ?, ?, ?, ?)`,
-          [
-            option.id,
-            question.id,
-            option.text,
-            option.imageUrl || null,
-            i,
-          ]
+          [option.id, question.id, option.text, option.imageUrl || null, i],
         );
       }
     } catch (error) {
@@ -706,4 +966,4 @@ export class DatabaseService {
       throw error;
     }
   }
-} 
+}

@@ -11,11 +11,8 @@ export const AppIconDesign: React.FC = () => {
         <Text style={styles.iconText}>L3EP</Text>
       </View>
       <Text style={styles.instructions}>
-        App Icon Design:{'\n'}
-        - Background: Michigan Blue (#00274C){'\n'}
-        - Text: Michigan Maize (#FFCB05){'\n'}
-        - Font: Bold, centered{'\n'}
-        - Rounded corners (20% radius){'\n'}
+        App Icon Design:{'\n'}- Background: Michigan Blue (#00274C){'\n'}- Text: Michigan Maize
+        (#FFCB05){'\n'}- Font: Bold, centered{'\n'}- Rounded corners (20% radius){'\n'}
         {'\n'}
         Sizes needed:{'\n'}
         iOS: 1024x1024 (then scaled down){'\n'}
@@ -64,4 +61,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AppIconDesign; 
+export default AppIconDesign;

@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "NDTExamPrep",
+      withModuleName: "L3EP",
       in: window,
       launchOptions: launchOptions
     )

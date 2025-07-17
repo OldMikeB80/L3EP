@@ -25,37 +25,28 @@ const initialState: QuestionState = {
 };
 
 // Async thunks
-export const loadCategories = createAsyncThunk(
-  'questions/loadCategories',
-  async () => {
-    const db = DatabaseService.getInstance();
-    return await db.getCategories();
-  }
-);
+export const loadCategories = createAsyncThunk('questions/loadCategories', async () => {
+  const db = DatabaseService.getInstance();
+  return await db.getCategories();
+});
 
 export const loadQuestionsByCategory = createAsyncThunk(
   'questions/loadByCategory',
   async (categoryId: string) => {
     const db = DatabaseService.getInstance();
     return await db.getQuestionsByCategory(categoryId);
-  }
+  },
 );
 
-export const loadAllQuestions = createAsyncThunk(
-  'questions/loadAll',
-  async () => {
-    const db = DatabaseService.getInstance();
-    return await db.getAllQuestions();
-  }
-);
+export const loadAllQuestions = createAsyncThunk('questions/loadAll', async () => {
+  const db = DatabaseService.getInstance();
+  return await db.getAllQuestions();
+});
 
-export const searchQuestions = createAsyncThunk(
-  'questions/search',
-  async (query: string) => {
-    const db = DatabaseService.getInstance();
-    return await db.searchQuestions(query);
-  }
-);
+export const searchQuestions = createAsyncThunk('questions/search', async (query: string) => {
+  const db = DatabaseService.getInstance();
+  return await db.searchQuestions(query);
+});
 
 export const toggleBookmark = createAsyncThunk(
   'questions/toggleBookmark',
@@ -63,17 +54,14 @@ export const toggleBookmark = createAsyncThunk(
     const db = DatabaseService.getInstance();
     await db.toggleBookmark(userId, questionId);
     return questionId;
-  }
+  },
 );
 
-export const syncQuestionBank = createAsyncThunk(
-  'questions/sync',
-  async () => {
-    // In a real app, this would sync with a remote server
-    // For now, we'll just update the last sync time
-    return new Date().toISOString();
-  }
-);
+export const syncQuestionBank = createAsyncThunk('questions/sync', async () => {
+  // In a real app, this would sync with a remote server
+  // For now, we'll just update the last sync time
+  return new Date().toISOString();
+});
 
 const questionSlice = createSlice({
   name: 'questions',
@@ -85,19 +73,24 @@ const questionSlice = createSlice({
     clearSearchResults: (state) => {
       state.searchResults = [];
     },
-    updateQuestionStats: (state, action: PayloadAction<{
-      questionId: string;
-      answered: boolean;
-      correct: boolean;
-      timeSpent: number;
-    }>) => {
-      const question = state.questions.find(q => q.id === action.payload.questionId);
+    updateQuestionStats: (
+      state,
+      action: PayloadAction<{
+        questionId: string;
+        answered: boolean;
+        correct: boolean;
+        timeSpent: number;
+      }>,
+    ) => {
+      const question = state.questions.find((q) => q.id === action.payload.questionId);
       if (question) {
         question.timesAnswered = (question.timesAnswered || 0) + 1;
         if (action.payload.correct) {
           question.timesCorrect = (question.timesCorrect || 0) + 1;
         }
-        question.averageTime = ((question.averageTime || 0) * (question.timesAnswered - 1) + action.payload.timeSpent) / question.timesAnswered;
+        question.averageTime =
+          ((question.averageTime || 0) * (question.timesAnswered - 1) + action.payload.timeSpent) /
+          question.timesAnswered;
         question.lastSeen = new Date().toISOString();
       }
     },
@@ -151,9 +144,9 @@ const questionSlice = createSlice({
         } else {
           state.bookmarkedQuestions.push(questionId);
         }
-        
+
         // Update the question's bookmark status
-        const question = state.questions.find(q => q.id === questionId);
+        const question = state.questions.find((q) => q.id === questionId);
         if (question) {
           question.isBookmarked = !question.isBookmarked;
         }
@@ -165,5 +158,6 @@ const questionSlice = createSlice({
   },
 });
 
-export const { setCurrentCategory, clearSearchResults, updateQuestionStats } = questionSlice.actions;
-export default questionSlice.reducer; 
+export const { setCurrentCategory, clearSearchResults, updateQuestionStats } =
+  questionSlice.actions;
+export default questionSlice.reducer;

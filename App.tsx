@@ -4,12 +4,21 @@ import { Provider, useSelector, useDispatch } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Provider as PaperProvider, DefaultTheme, MD3DarkTheme, Button, Card, List, Avatar, Title } from 'react-native-paper';
+import {
+  Provider as PaperProvider,
+  DefaultTheme,
+  MD3DarkTheme,
+  Button,
+  Card,
+  List,
+  Avatar,
+  Title,
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import SplashScreen from 'react-native-splash-screen'; // Temporarily disabled
 import { NetworkProvider } from 'react-native-offline';
 
-import { store, RootState } from '@store/store';
+import { store, RootState, useAppDispatch } from '@store/store';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { seedDatabase } from '@data/seedQuestions';
 import { loadSettingsFromStorage } from '@store/slices/settingsSlice';
@@ -61,15 +70,17 @@ const PlaceholderScreen = ({ title }: { title: string }) => (
 const ProfileScreen = () => {
   const dispatch = useDispatch();
   const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user);
-  
+
   const handleCreateDefaultUser = async () => {
     try {
-      await dispatch(createUser({
-        name: 'Test User',
-        email: 'test@example.com',
-        dailyStudyGoal: 30,
-        notificationsEnabled: true,
-      }) as any);
+      await dispatch(
+        createUser({
+          name: 'Test User',
+          email: 'test@example.com',
+          dailyStudyGoal: 30,
+          notificationsEnabled: true,
+        }) as any,
+      );
     } catch (error) {
       console.error('Error creating user:', error);
     }
@@ -81,7 +92,7 @@ const ProfileScreen = () => {
         <Icon name="account-circle" size={64} color="#1976D2" />
         <Text style={placeholderStyles.title}>Welcome to NDT Exam Prep</Text>
         <Text style={placeholderStyles.subtitle}>Create a profile to track your progress</Text>
-        <Button 
+        <Button
           mode="contained"
           onPress={handleCreateDefaultUser}
           style={{ marginTop: 20, paddingHorizontal: 30 }}
@@ -95,26 +106,26 @@ const ProfileScreen = () => {
   return (
     <ScrollView style={profileStyles.container}>
       <View style={profileStyles.header}>
-        <Avatar.Text 
-          size={80} 
-          label={currentUser.name.charAt(0)} 
+        <Avatar.Text
+          size={80}
+          label={currentUser.name.charAt(0)}
           style={{ backgroundColor: '#1976D2' }}
         />
         <Title style={profileStyles.name}>{currentUser.name}</Title>
         <Text style={profileStyles.email}>{currentUser.email}</Text>
       </View>
-      
+
       <Card style={profileStyles.card}>
         <Card.Content>
           <List.Item
             title="Daily Study Goal"
             description={`${currentUser.dailyStudyGoal} minutes`}
-            left={props => <List.Icon {...props} icon="timer" />}
+            left={(props) => <List.Icon {...props} icon="timer" />}
           />
           <List.Item
             title="Notifications"
             description={currentUser.notificationsEnabled ? 'Enabled' : 'Disabled'}
-            left={props => <List.Icon {...props} icon="bell" />}
+            left={(props) => <List.Icon {...props} icon="bell" />}
           />
         </Card.Content>
       </Card>
@@ -229,21 +240,23 @@ const MainTabs = () => {
 
 // Debug UI Component
 const DebugUI = () => {
-  // Only show in development mode
-  if (!__DEV__) return null;
-  
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const categories = useSelector((state: RootState) => state.questions.categories);
   const questions = useSelector((state: RootState) => state.questions.questions);
   
+  // Only show in development mode
+  if (!__DEV__) {
+    return null;
+  }
+
   const handleManualSeed = async () => {
     try {
       console.log('Manual seed triggered');
       await seedDatabase();
-      
+
       // Reload data from database to Redux
-      dispatch(loadCategories() as any);
-      dispatch(loadAllQuestions() as any);
+      dispatch(loadCategories());
+      dispatch(loadAllQuestions());
     } catch (error) {
       console.error('Manual seed error:', error);
     }
@@ -252,18 +265,18 @@ const DebugUI = () => {
   const handleClearAndReseed = async () => {
     try {
       console.log('Clear and reseed triggered');
-      
+
       // Re-initialize database (this will recreate tables if needed)
       const db = DatabaseService.getInstance();
       await db.initializeDatabase();
-      
+
       // Force reseed - seedDatabase will check if empty
       await seedDatabase();
-      
+
       // Reload data from database to Redux
-      dispatch(loadCategories() as any);
-      dispatch(loadAllQuestions() as any);
-      
+      dispatch(loadCategories());
+      dispatch(loadAllQuestions());
+
       console.log('Clear and reseed completed');
     } catch (error) {
       console.error('Clear and reseed error:', error);
@@ -271,17 +284,19 @@ const DebugUI = () => {
   };
 
   return (
-    <View style={{
-      position: 'absolute',
-      top: 50,
-      right: 10,
-      backgroundColor: colors.accentLight,
-      padding: 10,
-      borderRadius: 5,
-      borderWidth: 2,
-      borderColor: colors.accent,
-      zIndex: 1000,
-    }}>
+    <View
+      style={{
+        position: 'absolute',
+        top: 50,
+        right: 10,
+        backgroundColor: colors.accentLight,
+        padding: 10,
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: colors.accent,
+        zIndex: 1000,
+      }}
+    >
       <Text style={{ fontWeight: 'bold', color: colors.textOnAccent, fontSize: 12 }}>
         Categories: {categories.length}
       </Text>
@@ -297,9 +312,9 @@ const DebugUI = () => {
           borderRadius: 3,
         }}
       >
-                  <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
-            Force Seed Database
-          </Text>
+        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
+          Force Seed Database
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={handleClearAndReseed}
@@ -310,9 +325,9 @@ const DebugUI = () => {
           borderRadius: 3,
         }}
       >
-                  <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
-            Clear & Reseed
-          </Text>
+        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
+          Clear & Reseed
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -320,7 +335,7 @@ const DebugUI = () => {
 
 const App = () => {
   console.log('========== APP STARTING ==========');
-  
+
   const lightTheme = {
     ...DefaultTheme,
     colors: {
@@ -336,20 +351,21 @@ const App = () => {
     },
   };
 
-  const darkTheme = {
-    ...MD3DarkTheme,
-    colors: {
-      ...MD3DarkTheme.colors,
-      primary: colors.primary,
-      accent: colors.accent,
-      background: colors.background,
-      surface: colors.surface,
-      text: colors.textPrimary,
-      placeholder: colors.textSecondary,
-      error: colors.error,
-      notification: colors.accent,
-    },
-  };
+  // Commented out dark theme for future use
+  // const darkTheme = {
+  //   ...MD3DarkTheme,
+  //   colors: {
+  //     ...MD3DarkTheme.colors,
+  //     primary: colors.primary,
+  //     accent: colors.accent,
+  //     background: colors.background,
+  //     surface: colors.surface,
+  //     text: colors.textPrimary,
+  //     placeholder: colors.textSecondary,
+  //     error: colors.error,
+  //     notification: colors.accent,
+  //   },
+  // };
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -361,15 +377,20 @@ const App = () => {
         // Seed database with initial data if empty
         const categories = await db.getCategories();
         console.log('App initialization - Categories found:', categories.length);
-        
+
         if (!categories || categories.length === 0) {
           console.log('Database is empty, seeding with initial data...');
           await seedDatabase();
-          
+
           // Verify seeding worked
           const verifyCategories = await db.getCategories();
           const verifyQuestions = await db.getAllQuestions();
-          console.log('After seeding - Categories:', verifyCategories.length, 'Questions:', verifyQuestions.length);
+          console.log(
+            'After seeding - Categories:',
+            verifyCategories.length,
+            'Questions:',
+            verifyQuestions.length,
+          );
         } else {
           // Check if we have questions
           const allQuestions = await db.getAllQuestions();
@@ -378,12 +399,12 @@ const App = () => {
 
         // Load data into Redux store
         console.log('Loading data into Redux store...');
-        store.dispatch(loadCategories() as any);
-        store.dispatch(loadAllQuestions() as any);
+        store.dispatch(loadCategories());
+        store.dispatch(loadAllQuestions());
 
         // Load user settings
-        store.dispatch(loadSettingsFromStorage() as any);
-        
+        store.dispatch(loadSettingsFromStorage());
+
         // Load current user
         store.dispatch(loadUser());
 
@@ -425,43 +446,35 @@ const AppContent = () => {
             },
           }}
         >
-          <Stack.Screen 
-            name="Main" 
-            component={MainTabs} 
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen 
-            name="Test" 
-            component={TestScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen 
-            name="TestResults" 
+          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+          <Stack.Screen name="Test" component={TestScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="TestResults"
             component={TestResultsScreen}
             options={{ title: 'Test Results' }}
           />
-          <Stack.Screen 
-            name="StudyMode" 
+          <Stack.Screen
+            name="StudyMode"
             component={StudyModeScreen}
             options={{ title: 'Study Mode' }}
           />
-          <Stack.Screen 
-            name="MockExamSetup" 
+          <Stack.Screen
+            name="MockExamSetup"
             component={MockExamSetupScreen}
             options={{ title: 'Mock Exam Setup' }}
           />
-          <Stack.Screen 
-            name="CategoryDetail" 
+          <Stack.Screen
+            name="CategoryDetail"
             component={CategoryDetailScreen}
             options={{ title: 'Category Details' }}
           />
-          <Stack.Screen 
-            name="Settings" 
+          <Stack.Screen
+            name="Settings"
             component={SettingsScreen}
             options={{ title: 'Settings' }}
           />
-          <Stack.Screen 
-            name="QuestionDetail" 
+          <Stack.Screen
+            name="QuestionDetail"
             component={QuestionDetailScreen}
             options={{ title: 'Question Details' }}
           />
@@ -472,4 +485,4 @@ const AppContent = () => {
   );
 };
 
-export default App; 
+export default App;

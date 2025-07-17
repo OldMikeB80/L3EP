@@ -2,6 +2,7 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { User, UserProgress } from '@models/User';
 import { DatabaseService } from '@services/database/DatabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RootState } from '../store';
 
 interface UserState {
   currentUser: User | null;
@@ -24,17 +25,14 @@ const initialState: UserState = {
 };
 
 // Async thunks
-export const loadUser = createAsyncThunk(
-  'user/loadUser',
-  async () => {
-    const userId = await AsyncStorage.getItem('currentUserId');
-    if (!userId) return null;
-    
-    const db = DatabaseService.getInstance();
-    // Implement getUser method in DatabaseService
-    return await db.getUser(userId);
-  }
-);
+export const loadUser = createAsyncThunk('user/loadUser', async () => {
+  const userId = await AsyncStorage.getItem('currentUserId');
+  if (!userId) return null;
+
+  const db = DatabaseService.getInstance();
+  // Implement getUser method in DatabaseService
+  return await db.getUser(userId);
+});
 
 export const createUser = createAsyncThunk(
   'user/createUser',
@@ -43,17 +41,35 @@ export const createUser = createAsyncThunk(
     const userId = await db.createUser(userData);
     await AsyncStorage.setItem('currentUserId', userId);
     return { ...userData, id: userId };
-  }
+  },
 );
 
 export const updateUserProgress = createAsyncThunk(
   'user/updateProgress',
-  async ({ categoryId, progress }: { categoryId: string; progress: Partial<UserProgress> }) => {
+  async ({ userId, categoryId, progress }: { userId: string; categoryId: string; progress: Partial<UserProgress> }, { getState }) => {
     const db = DatabaseService.getInstance();
-    // Implement updateUserProgress method in DatabaseService
-    await db.updateUserProgress(categoryId, progress);
+    const state = getState() as RootState;
+    const effectiveUserId = userId || state.user.currentUser?.id || 'default-user';
+    
+    // Create full UserProgress object with defaults
+    const fullProgress: UserProgress = {
+      userId: effectiveUserId,
+      categoryId,
+      totalQuestions: 0,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      averageScore: 0,
+      lastStudyDate: new Date(),
+      studyStreak: 0,
+      totalStudyTime: 0,
+      weakAreas: [],
+      strongAreas: [],
+      ...progress,
+    };
+    
+    await db.updateUserProgress(effectiveUserId, categoryId, fullProgress);
     return { categoryId, progress };
-  }
+  },
 );
 
 const userSlice = createSlice({
@@ -116,5 +132,6 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, logout, updateStudyTime, updateStudyStreak, setUserProgress } = userSlice.actions;
-export default userSlice.reducer; 
+export const { setUser, logout, updateStudyTime, updateStudyStreak, setUserProgress } =
+  userSlice.actions;
+export default userSlice.reducer;

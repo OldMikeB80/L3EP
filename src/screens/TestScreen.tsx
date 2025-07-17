@@ -16,7 +16,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppDispatch, useAppSelector } from '@store/store';
 import { Question, Option } from '@models/Question';
 import { TestSession, TestQuestion } from '@models/User';
-import { submitAnswer, nextQuestion, previousQuestion, bookmarkQuestion, startTestSession } from '@store/slices/testSlice';
+import {
+  submitAnswer,
+  nextQuestion,
+  previousQuestion,
+  bookmarkQuestion,
+  startTestSession,
+} from '@store/slices/testSlice';
 import { colors } from '@constants/colors';
 
 const { width, height } = Dimensions.get('window');
@@ -31,15 +37,15 @@ const TestScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useAppDispatch();
-  
+
   const { testType, categoryId, timeLimit } = route.params as TestScreenProps;
-  
+
   const { currentQuestion, questionIndex, totalQuestions, testSession, isPaused } = useAppSelector(
-    (state) => state.test
+    (state) => state.test,
   );
   const { currentUser } = useAppSelector((state) => state.user);
   const { questions: allQuestions } = useAppSelector((state) => state.questions);
-  
+
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [timeRemaining, setTimeRemaining] = useState(timeLimit ? timeLimit * 60 : 0);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -50,19 +56,21 @@ const TestScreen: React.FC = () => {
   // Initialize test session when component mounts
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     if (!testSession) {
       // Start a test session with default parameters
       const userId = currentUser?.id || 'default-user';
-      dispatch(startTestSession({
-        type: testType,
-        categoryId: categoryId,
-        numberOfQuestions: testType === 'practice' ? 15 : 150, // 15 for practice, 150 for mock
-        timeLimit: timeLimit,
-        userId: userId,
-      }) as any);
+      dispatch(
+        startTestSession({
+          type: testType,
+          categoryId: categoryId,
+          numberOfQuestions: testType === 'practice' ? 15 : 150, // 15 for practice, 150 for mock
+          timeLimit: timeLimit,
+          userId: userId,
+        }) as any,
+      );
     }
-    
+
     return () => {
       isMountedRef.current = false;
     };
@@ -106,7 +114,7 @@ const TestScreen: React.FC = () => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -115,7 +123,7 @@ const TestScreen: React.FC = () => {
 
   const handleTimeUp = () => {
     Alert.alert(
-      'Time\'s Up!',
+      "Time's Up!",
       'The test time has expired. Your answers have been saved.',
       [
         {
@@ -123,7 +131,7 @@ const TestScreen: React.FC = () => {
           onPress: () => navigation.navigate('TestResults' as never),
         },
       ],
-      { cancelable: false }
+      { cancelable: false },
     );
   };
 
@@ -134,15 +142,15 @@ const TestScreen: React.FC = () => {
     }
 
     const isCorrect = selectedAnswer === currentQuestion?.correctAnswer;
-    
+
     dispatch(
       submitAnswer({
         questionId: currentQuestion!.id,
         userAnswer: selectedAnswer,
         isCorrect,
-        timeSpent: timeLimit ? (timeLimit * 60 - timeRemaining) : 0,
+        timeSpent: timeLimit ? timeLimit * 60 - timeRemaining : 0,
         confidence,
-      })
+      }),
     );
 
     if (testType === 'practice') {
@@ -160,16 +168,12 @@ const TestScreen: React.FC = () => {
       setConfidence('medium');
     } else {
       // Test completed
-      Alert.alert(
-        'Test Completed!',
-        'You have completed all questions.',
-        [
-          {
-            text: 'View Results',
-            onPress: () => navigation.navigate('TestResults' as never),
-          },
-        ]
-      );
+      Alert.alert('Test Completed!', 'You have completed all questions.', [
+        {
+          text: 'View Results',
+          onPress: () => navigation.navigate('TestResults' as never),
+        },
+      ]);
     }
   };
 
@@ -211,11 +215,13 @@ const TestScreen: React.FC = () => {
             disabled={showExplanation}
             color={showCorrectAnswer ? colors.success : isWrong ? colors.error : colors.primary}
           />
-          <Text style={[
-            styles.optionText, 
-            showCorrectAnswer && styles.correctText,
-            isWrong && styles.wrongText,
-          ]}>
+          <Text
+            style={[
+              styles.optionText,
+              showCorrectAnswer && styles.correctText,
+              isWrong && styles.wrongText,
+            ]}
+          >
             {option.text}
           </Text>
           {showCorrectAnswer && (
@@ -225,9 +231,7 @@ const TestScreen: React.FC = () => {
             <Icon name="close-circle" size={24} color={colors.error} style={styles.resultIcon} />
           )}
         </View>
-        {option.imageUrl && (
-          <Image source={{ uri: option.imageUrl }} style={styles.optionImage} />
-        )}
+        {option.imageUrl && <Image source={{ uri: option.imageUrl }} style={styles.optionImage} />}
       </TouchableOpacity>
     );
   };
@@ -248,13 +252,13 @@ const TestScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="close" size={24} color="#666" />
           </TouchableOpacity>
-          
+
           <View style={styles.progressInfo}>
             <Text style={styles.questionNumber}>
               Question {questionIndex + 1} of {totalQuestions}
             </Text>
           </View>
-          
+
           {timeLimit && (
             <View style={[styles.timerContainer, timeRemaining < 300 && styles.timerWarning]}>
               <Icon name="timer" size={18} color={timeRemaining < 300 ? '#F44336' : '#666'} />
@@ -264,10 +268,10 @@ const TestScreen: React.FC = () => {
             </View>
           )}
         </View>
-        
-        <ProgressBar 
-          progress={(questionIndex + 1) / totalQuestions} 
-          color="#1976D2" 
+
+        <ProgressBar
+          progress={(questionIndex + 1) / totalQuestions}
+          color="#1976D2"
           style={styles.progressBar}
         />
       </View>
@@ -278,8 +282,8 @@ const TestScreen: React.FC = () => {
           <Card.Content>
             <View style={styles.questionHeader}>
               <View style={styles.questionMeta}>
-                <Chip 
-                  mode="outlined" 
+                <Chip
+                  mode="outlined"
                   style={[
                     styles.difficultyChip,
                     currentQuestion.difficulty === 'easy' && styles.easyChip,
@@ -290,39 +294,35 @@ const TestScreen: React.FC = () => {
                   {currentQuestion.difficulty.toUpperCase()}
                 </Chip>
                 <TouchableOpacity onPress={handleBookmark}>
-                  <Icon 
-                    name={currentQuestion.isBookmarked ? "bookmark" : "bookmark-outline"} 
-                    size={24} 
-                    color="#666" 
+                  <Icon
+                    name={currentQuestion.isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                    size={24}
+                    color="#666"
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             <Text style={styles.questionText}>{currentQuestion.question}</Text>
-            
+
             {currentQuestion.imageUrl && (
-              <Image 
-                source={{ uri: currentQuestion.imageUrl }} 
+              <Image
+                source={{ uri: currentQuestion.imageUrl }}
                 style={styles.questionImage}
                 resizeMode="contain"
               />
             )}
-            
+
             {currentQuestion.formulaLatex && (
               <View style={styles.mathJax}>
-                <Text style={styles.formulaText}>
-                  Formula: {currentQuestion.formulaLatex}
-                </Text>
+                <Text style={styles.formulaText}>Formula: {currentQuestion.formulaLatex}</Text>
               </View>
             )}
           </Card.Content>
         </Card>
 
         {/* Options */}
-        <View style={styles.optionsContainer}>
-          {currentQuestion.options.map(renderOption)}
-        </View>
+        <View style={styles.optionsContainer}>{currentQuestion.options.map(renderOption)}</View>
 
         {/* Confidence Level (for practice mode) */}
         {testType === 'practice' && !showExplanation && (
@@ -331,26 +331,50 @@ const TestScreen: React.FC = () => {
               <Text style={styles.confidenceTitle}>How confident are you?</Text>
               <View style={styles.confidenceButtons}>
                 <TouchableOpacity
-                  style={[styles.confidenceButton, confidence === 'low' && styles.confidenceSelected]}
+                  style={[
+                    styles.confidenceButton,
+                    confidence === 'low' && styles.confidenceSelected,
+                  ]}
                   onPress={() => setConfidence('low')}
                 >
-                  <Text style={[styles.confidenceText, confidence === 'low' && styles.confidenceTextSelected]}>
+                  <Text
+                    style={[
+                      styles.confidenceText,
+                      confidence === 'low' && styles.confidenceTextSelected,
+                    ]}
+                  >
                     Low
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.confidenceButton, confidence === 'medium' && styles.confidenceSelected]}
+                  style={[
+                    styles.confidenceButton,
+                    confidence === 'medium' && styles.confidenceSelected,
+                  ]}
                   onPress={() => setConfidence('medium')}
                 >
-                  <Text style={[styles.confidenceText, confidence === 'medium' && styles.confidenceTextSelected]}>
+                  <Text
+                    style={[
+                      styles.confidenceText,
+                      confidence === 'medium' && styles.confidenceTextSelected,
+                    ]}
+                  >
                     Medium
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.confidenceButton, confidence === 'high' && styles.confidenceSelected]}
+                  style={[
+                    styles.confidenceButton,
+                    confidence === 'high' && styles.confidenceSelected,
+                  ]}
                   onPress={() => setConfidence('high')}
                 >
-                  <Text style={[styles.confidenceText, confidence === 'high' && styles.confidenceTextSelected]}>
+                  <Text
+                    style={[
+                      styles.confidenceText,
+                      confidence === 'high' && styles.confidenceTextSelected,
+                    ]}
+                  >
                     High
                   </Text>
                 </TouchableOpacity>
@@ -364,22 +388,30 @@ const TestScreen: React.FC = () => {
           <Card style={styles.explanationCard}>
             <Card.Content>
               <View style={styles.explanationHeader}>
-                <Icon 
-                  name={selectedAnswer === currentQuestion.correctAnswer ? "check-circle" : "close-circle"} 
-                  size={24} 
-                  color={selectedAnswer === currentQuestion.correctAnswer ? colors.success : colors.error} 
+                <Icon
+                  name={
+                    selectedAnswer === currentQuestion.correctAnswer
+                      ? 'check-circle'
+                      : 'close-circle'
+                  }
+                  size={24}
+                  color={
+                    selectedAnswer === currentQuestion.correctAnswer ? colors.success : colors.error
+                  }
                 />
                 <Text style={styles.explanationTitle}>
-                  {selectedAnswer === currentQuestion.correctAnswer ? "Correct!" : "Incorrect"}
+                  {selectedAnswer === currentQuestion.correctAnswer ? 'Correct!' : 'Incorrect'}
                 </Text>
               </View>
               <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
-              
+
               {currentQuestion.references && currentQuestion.references.length > 0 && (
                 <View style={styles.referencesContainer}>
                   <Text style={styles.referencesTitle}>References:</Text>
                   {currentQuestion.references.map((ref: string, index: number) => (
-                    <Text key={index} style={styles.referenceText}>• {ref}</Text>
+                    <Text key={index} style={styles.referenceText}>
+                      • {ref}
+                    </Text>
                   ))}
                 </View>
               )}
@@ -398,7 +430,7 @@ const TestScreen: React.FC = () => {
         >
           Previous
         </Button>
-        
+
         <Button
           mode="contained"
           onPress={showExplanation ? handleNextQuestion : handleSubmitAnswer}
@@ -660,4 +692,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TestScreen; 
+export default TestScreen;

@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, FAB, Chip, IconButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppSelector, useAppDispatch } from '@store/store';
-import { loadQuestionsByCategory, toggleBookmark, loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
+import {
+  loadQuestionsByCategory,
+  toggleBookmark,
+  loadCategories,
+  loadAllQuestions,
+} from '@store/slices/questionSlice';
 import { Question } from '@models/Question';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { colors } from '@constants/colors';
@@ -26,12 +24,12 @@ const StudyModeScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useAppDispatch();
-  
+
   const { categoryId } = (route.params as StudyModeScreenProps) || {};
-  
+
   const { questions, categories } = useAppSelector((state) => state.questions);
   const { currentUser } = useAppSelector((state) => state.user);
-  
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
@@ -41,16 +39,16 @@ const StudyModeScreen: React.FC = () => {
   useEffect(() => {
     if (categoryId) {
       console.log('StudyModeScreen: Loading questions for category:', categoryId);
-      dispatch(loadQuestionsByCategory(categoryId) as any);
+      dispatch(loadQuestionsByCategory(categoryId));
     } else {
       // Load all questions when no category is specified
       console.log('StudyModeScreen: Loading all questions');
-      dispatch(loadAllQuestions() as any);
+      dispatch(loadAllQuestions());
     }
-    dispatch(loadCategories() as any);
+    dispatch(loadCategories());
   }, [categoryId, dispatch]);
 
-  const filteredQuestions = questions.filter(q => {
+  const filteredQuestions = questions.filter((q) => {
     if (onlyBookmarked && !q.isBookmarked) return false;
     if (filterDifficulty !== 'all' && q.difficulty !== filterDifficulty) return false;
     return true;
@@ -62,7 +60,7 @@ const StudyModeScreen: React.FC = () => {
   }, [questions, filteredQuestions]);
 
   const currentQuestion = filteredQuestions[currentIndex];
-  const currentCategory = categories.find(c => c.id === categoryId);
+  const currentCategory = categories.find((c) => c.id === categoryId);
 
   const handleNext = () => {
     if (currentIndex < filteredQuestions.length - 1) {
@@ -82,10 +80,12 @@ const StudyModeScreen: React.FC = () => {
     if (currentQuestion) {
       // Use a default user ID if no user is logged in
       const userId = currentUser?.id || 'default-user';
-      dispatch(toggleBookmark({
-        userId: userId,
-        questionId: currentQuestion.id,
-      }) as any);
+      dispatch(
+        toggleBookmark({
+          userId: userId,
+          questionId: currentQuestion.id,
+        }) as any,
+      );
     }
   };
 
@@ -94,19 +94,24 @@ const StudyModeScreen: React.FC = () => {
       return (
         <Card style={styles.emptyCard}>
           <Card.Content>
-            <Icon name="help-circle-outline" size={64} color="#999" style={{ alignSelf: 'center' }} />
+            <Icon
+              name="help-circle-outline"
+              size={64}
+              color="#999"
+              style={{ alignSelf: 'center' }}
+            />
             <Text style={styles.emptyText}>No questions available</Text>
             <Text style={{ textAlign: 'center', marginTop: 10, color: '#666' }}>
               Total questions loaded: {questions.length}
             </Text>
-            <Button 
-              mode="contained" 
+            <Button
+              mode="contained"
               onPress={() => {
                 console.log('Reloading questions...');
                 if (categoryId) {
-                  dispatch(loadQuestionsByCategory(categoryId) as any);
+                  dispatch(loadQuestionsByCategory(categoryId));
                 } else {
-                  dispatch(loadAllQuestions() as any);
+                  dispatch(loadAllQuestions());
                 }
               }}
               style={{ marginTop: 20 }}
@@ -123,8 +128,8 @@ const StudyModeScreen: React.FC = () => {
         <Card.Content>
           {/* Question Header */}
           <View style={styles.questionHeader}>
-            <Chip 
-              mode="outlined" 
+            <Chip
+              mode="outlined"
               style={[
                 styles.difficultyChip,
                 currentQuestion.difficulty === 'easy' && styles.easyChip,
@@ -135,7 +140,7 @@ const StudyModeScreen: React.FC = () => {
               {currentQuestion.difficulty.toUpperCase()}
             </Chip>
             <IconButton
-              icon={currentQuestion.isBookmarked ? "bookmark" : "bookmark-outline"}
+              icon={currentQuestion.isBookmarked ? 'bookmark' : 'bookmark-outline'}
               onPress={handleBookmark}
               size={24}
             />
@@ -150,7 +155,7 @@ const StudyModeScreen: React.FC = () => {
               const isCorrect = option.id === currentQuestion.correctAnswer;
               const showAsCorrect = showAnswer && isCorrect;
               const showAsIncorrect = showAnswer && !isCorrect;
-              
+
               return (
                 <TouchableOpacity
                   key={option.id}
@@ -163,19 +168,17 @@ const StudyModeScreen: React.FC = () => {
                   disabled={showAnswer}
                 >
                   <View style={styles.optionContent}>
-                    <Text style={[
-                      styles.optionText,
-                      showAsCorrect && styles.correctText,
-                      showAsIncorrect && styles.incorrectText,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.optionText,
+                        showAsCorrect && styles.correctText,
+                        showAsIncorrect && styles.incorrectText,
+                      ]}
+                    >
                       {option.text}
                     </Text>
-                    {showAsCorrect && (
-                      <Icon name="check-circle" size={24} color={colors.success} />
-                    )}
-                    {showAsIncorrect && (
-                      <Icon name="close-circle" size={24} color={colors.error} />
-                    )}
+                    {showAsCorrect && <Icon name="check-circle" size={24} color={colors.success} />}
+                    {showAsIncorrect && <Icon name="close-circle" size={24} color={colors.error} />}
                   </View>
                 </TouchableOpacity>
               );
@@ -189,15 +192,15 @@ const StudyModeScreen: React.FC = () => {
                 <Icon name="information" size={20} color="#1976D2" />
                 <Text style={styles.explanationTitle}>Explanation</Text>
               </View>
-              <Paragraph style={styles.explanationText}>
-                {currentQuestion.explanation}
-              </Paragraph>
-              
+              <Paragraph style={styles.explanationText}>{currentQuestion.explanation}</Paragraph>
+
               {currentQuestion.references && currentQuestion.references.length > 0 && (
                 <View style={styles.referencesContainer}>
                   <Text style={styles.referencesTitle}>References:</Text>
                   {currentQuestion.references.map((ref, index) => (
-                    <Text key={index} style={styles.referenceText}>• {ref}</Text>
+                    <Text key={index} style={styles.referenceText}>
+                      • {ref}
+                    </Text>
                   ))}
                 </View>
               )}
@@ -224,12 +227,8 @@ const StudyModeScreen: React.FC = () => {
               <Card.Content>
                 <View style={styles.listItemHeader}>
                   <Text style={styles.listItemNumber}>Q{index + 1}</Text>
-                  <Chip style={styles.listDifficultyChip}>
-                    {question.difficulty}
-                  </Chip>
-                  {question.isBookmarked && (
-                    <Icon name="bookmark" size={16} color="#FF9800" />
-                  )}
+                  <Chip style={styles.listDifficultyChip}>{question.difficulty}</Chip>
+                  {question.isBookmarked && <Icon name="bookmark" size={16} color="#FF9800" />}
                 </View>
                 <Text style={styles.listItemText} numberOfLines={2}>
                   {question.question}
@@ -249,25 +248,19 @@ const StudyModeScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#333" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Study Mode</Text>
-          {currentCategory && (
-            <Text style={styles.headerSubtitle}>{currentCategory.name}</Text>
-          )}
+          {currentCategory && <Text style={styles.headerSubtitle}>{currentCategory.name}</Text>}
         </View>
-        
+
         <TouchableOpacity onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}>
           <Icon name={viewMode === 'card' ? 'view-list' : 'card'} size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
       {/* Filters */}
-      <ScrollView 
-        horizontal 
-        style={styles.filterContainer}
-        showsHorizontalScrollIndicator={false}
-      >
+      <ScrollView horizontal style={styles.filterContainer} showsHorizontalScrollIndicator={false}>
         <Chip
           selected={filterDifficulty === 'all'}
           onPress={() => setFilterDifficulty('all')}
@@ -313,10 +306,10 @@ const StudyModeScreen: React.FC = () => {
             {currentIndex + 1} / {filteredQuestions.length}
           </Text>
           <View style={styles.progressBar}>
-            <View 
+            <View
               style={[
                 styles.progressFill,
-                { width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%` }
+                { width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%` },
               ]}
             />
           </View>
@@ -339,17 +332,22 @@ const StudyModeScreen: React.FC = () => {
         >
           Previous
         </Button>
-        
+
         <Text style={styles.progressIndicator}>
           {currentIndex + 1} / {filteredQuestions.length}
         </Text>
-        
+
         <Button
           mode="contained"
           onPress={handleNext}
           disabled={currentIndex === filteredQuestions.length - 1}
-          style={[styles.navButton, currentIndex === filteredQuestions.length - 1 && styles.navButtonDisabled]}
-          labelStyle={currentIndex === filteredQuestions.length - 1 ? styles.navButtonTextDisabled : undefined}
+          style={[
+            styles.navButton,
+            currentIndex === filteredQuestions.length - 1 && styles.navButtonDisabled,
+          ]}
+          labelStyle={
+            currentIndex === filteredQuestions.length - 1 ? styles.navButtonTextDisabled : undefined
+          }
         >
           Next
         </Button>
@@ -728,4 +726,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StudyModeScreen; 
+export default StudyModeScreen;

@@ -75,7 +75,10 @@ const settingsSlice = createSlice({
       state.theme = action.payload;
       AsyncStorage.setItem('theme', action.payload);
     },
-    updateNotificationSettings: (state, action: PayloadAction<Partial<SettingsState['notifications']>>) => {
+    updateNotificationSettings: (
+      state,
+      action: PayloadAction<Partial<SettingsState['notifications']>>,
+    ) => {
       state.notifications = { ...state.notifications, ...action.payload };
       AsyncStorage.setItem('notifications', JSON.stringify(state.notifications));
     },
@@ -117,9 +120,9 @@ export const loadSettingsFromStorage = () => async (dispatch: any) => {
   try {
     const keys = ['theme', 'notifications', 'display', 'practice', 'audio', 'dataSync'];
     const values = await AsyncStorage.multiGet(keys);
-    
+
     const settings: Partial<SettingsState> = {};
-    
+
     values.forEach(([key, value]) => {
       if (value) {
         try {
@@ -133,7 +136,7 @@ export const loadSettingsFromStorage = () => async (dispatch: any) => {
         }
       }
     });
-    
+
     dispatch(settingsSlice.actions.loadSettings(settings));
   } catch (error) {
     console.error('Failed to load settings:', error);
@@ -151,4 +154,4 @@ export const {
   resetSettings,
 } = settingsSlice.actions;
 
-export default settingsSlice.reducer; 
+export default settingsSlice.reducer;

@@ -9,7 +9,15 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Card, Title, Paragraph, ProgressBar, Avatar, IconButton, Button } from 'react-native-paper';
+import {
+  Card,
+  Title,
+  Paragraph,
+  ProgressBar,
+  Avatar,
+  IconButton,
+  Button,
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppSelector, useAppDispatch } from '@store/store';
 import { loadUser } from '@store/slices/userSlice';
@@ -78,16 +86,16 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.debugText}>Categories loaded: {categories.length}</Text>
               <Text style={styles.debugText}>Questions loaded: {questions.length}</Text>
               <Text style={styles.debugText}>Loading: {isLoading ? 'Yes' : 'No'}</Text>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 onPress={async () => {
                   console.log('Manual seed triggered');
                   const db = DatabaseService.getInstance();
                   await seedDatabase();
                   // Force reload after seeding
                   setTimeout(() => {
-                    dispatch(loadCategories() as any);
-                    dispatch(loadAllQuestions() as any);
+                    dispatch(loadCategories());
+                    dispatch(loadAllQuestions());
                     console.log('Data reload triggered');
                   }, 500);
                 }}
@@ -108,9 +116,9 @@ const HomeScreen: React.FC = () => {
               <Title style={styles.userName}>{currentUser?.name || 'Student'}</Title>
             </View>
             <TouchableOpacity onPress={() => (navigation as any).navigate('Profile')}>
-              <Avatar.Text 
-                size={50} 
-                label={currentUser?.name?.charAt(0) || 'S'} 
+              <Avatar.Text
+                size={50}
+                label={currentUser?.name?.charAt(0) || 'S'}
                 style={styles.avatar}
                 labelStyle={styles.avatarLabel}
               />
@@ -127,7 +135,7 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.statLabel}>Day Streak</Text>
             </Card.Content>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
               <Icon name="clock-outline" size={24} color={colors.primary} />
@@ -135,7 +143,7 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.statLabel}>Study Time</Text>
             </Card.Content>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <Card.Content style={styles.statContent}>
               <Icon name="check-circle" size={24} color={colors.accent} />
@@ -174,17 +182,26 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {categories.map((category, index) => (
-            <TouchableOpacity 
-              key={category.id} 
+            <TouchableOpacity
+              key={category.id}
               onPress={() => (navigation as any).navigate('StudyMode', { categoryId: category.id })}
               activeOpacity={0.8}
             >
               <Card style={styles.categoryCard}>
                 <Card.Content>
                   <View style={styles.categoryContent}>
-                    <View style={[styles.categoryIcon, { backgroundColor: colors.categories[category.id as keyof typeof colors.categories] || colors.primary }]}>
+                    <View
+                      style={[
+                        styles.categoryIcon,
+                        {
+                          backgroundColor:
+                            colors.categories[category.id as keyof typeof colors.categories] ||
+                            colors.primary,
+                        },
+                      ]}
+                    >
                       <Icon name={category.icon} size={24} color="white" />
                     </View>
                     <View style={styles.categoryInfo}>
@@ -193,9 +210,12 @@ const HomeScreen: React.FC = () => {
                         {category.totalQuestions} questions
                       </Text>
                       <View style={styles.progressContainer}>
-                        <ProgressBar 
-                          progress={0} 
-                          color={colors.categories[category.id as keyof typeof colors.categories] || colors.primary} 
+                        <ProgressBar
+                          progress={0}
+                          color={
+                            colors.categories[category.id as keyof typeof colors.categories] ||
+                            colors.primary
+                          }
                           style={styles.categoryProgress}
                         />
                         <Text style={styles.progressText}>0%</Text>
@@ -217,8 +237,8 @@ const HomeScreen: React.FC = () => {
               <Title style={styles.tipTitle}>Daily Tip</Title>
             </View>
             <Paragraph style={styles.tipText}>
-              Level 3 exams test your ability to interpret codes, write procedures, and manage NDT programs. 
-              Focus on understanding the "why" behind each method, not just the "how".
+              Level 3 exams test your ability to interpret codes, write procedures, and manage NDT
+              programs. Focus on understanding the "why" behind each method, not just the "how".
             </Paragraph>
           </Card.Content>
         </Card>
@@ -447,4 +467,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;

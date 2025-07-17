@@ -49,4 +49,4 @@ export interface QuestionBank {
   lastUpdated: Date;
   categories: Category[];
   questions: Question[];
-} 
+}

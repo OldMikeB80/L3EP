@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { Card, Title, Paragraph, ProgressBar, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-} from 'react-native-chart-kit';
+import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { useAppSelector } from '@store/store';
 import { DatabaseService } from '@services/database/DatabaseService';
 
@@ -56,7 +45,7 @@ const ProgressScreen: React.FC = () => {
     // Load data from database
     const db = DatabaseService.getInstance();
     // Implementation would fetch actual data
-    
+
     // Mock data for now
     setWeeklyData([
       { value: 75, label: 'Mon', date: new Date() },
@@ -79,7 +68,7 @@ const ProgressScreen: React.FC = () => {
       },
       {
         name: 'Materials & Processes',
-        progress: 0.60,
+        progress: 0.6,
         questionsAnswered: 120,
         totalQuestions: 200,
         averageScore: 75,
@@ -148,15 +137,12 @@ const ProgressScreen: React.FC = () => {
       {/* Header Stats */}
       <View style={styles.headerStats}>
         <Text style={styles.screenTitle}>Your Progress</Text>
-        
+
         <View style={styles.periodSelector}>
           {['week', 'month', 'all'].map((period) => (
             <TouchableOpacity
               key={period}
-              style={[
-                styles.periodButton,
-                selectedPeriod === period && styles.periodButtonActive,
-              ]}
+              style={[styles.periodButton, selectedPeriod === period && styles.periodButtonActive]}
               onPress={() => setSelectedPeriod(period as any)}
             >
               <Text
@@ -165,7 +151,9 @@ const ProgressScreen: React.FC = () => {
                   selectedPeriod === period && styles.periodButtonTextActive,
                 ]}
               >
-                {period === 'all' ? 'All Time' : `This ${period.charAt(0).toUpperCase() + period.slice(1)}`}
+                {period === 'all'
+                  ? 'All Time'
+                  : `This ${period.charAt(0).toUpperCase() + period.slice(1)}`}
               </Text>
             </TouchableOpacity>
           ))}
@@ -214,10 +202,10 @@ const ProgressScreen: React.FC = () => {
           <View style={styles.chartContainer}>
             <LineChart
               data={{
-                labels: weeklyData.map(d => d.label),
+                labels: weeklyData.map((d) => d.label),
                 datasets: [
                   {
-                    data: weeklyData.map(d => d.value),
+                    data: weeklyData.map((d) => d.value),
                   },
                 ],
               }}
@@ -239,7 +227,7 @@ const ProgressScreen: React.FC = () => {
       <Card style={styles.categoryCard}>
         <Card.Content>
           <Title style={styles.chartTitle}>Category Breakdown</Title>
-          
+
           {categoryData.map((category) => (
             <View key={category.name} style={styles.categoryItem}>
               <View style={styles.categoryHeader}>
@@ -247,13 +235,13 @@ const ProgressScreen: React.FC = () => {
                 <Text style={styles.categoryName}>{category.name}</Text>
                 <Text style={styles.categoryScore}>{category.averageScore}%</Text>
               </View>
-              
-              <ProgressBar 
-                progress={category.progress} 
-                color={category.color} 
+
+              <ProgressBar
+                progress={category.progress}
+                color={category.color}
                 style={styles.categoryProgress}
               />
-              
+
               <View style={styles.categoryStats}>
                 <Text style={styles.categoryStatText}>
                   {category.questionsAnswered} / {category.totalQuestions} questions
@@ -307,8 +295,8 @@ const ProgressScreen: React.FC = () => {
             <View style={styles.insightContent}>
               <Text style={styles.insightTitle}>Strong Performance</Text>
               <Text style={styles.insightText}>
-                You're excelling in {totalStats.strongCategories.join(' and ')}. 
-                Keep up the great work!
+                You're excelling in {totalStats.strongCategories.join(' and ')}. Keep up the great
+                work!
               </Text>
             </View>
           </View>
@@ -318,7 +306,7 @@ const ProgressScreen: React.FC = () => {
             <View style={styles.insightContent}>
               <Text style={styles.insightTitle}>Focus Areas</Text>
               <Text style={styles.insightText}>
-                Consider spending more time on {totalStats.weakCategories.join(' and ')} 
+                Consider spending more time on {totalStats.weakCategories.join(' and ')}
                 to improve your overall score.
               </Text>
             </View>
@@ -348,7 +336,7 @@ const ProgressScreen: React.FC = () => {
               <Text style={styles.achievementText}>Quiz Master</Text>
               <Text style={styles.achievementSubtext}>100 questions</Text>
             </View>
-            
+
             <View style={styles.achievement}>
               <View style={[styles.achievementIcon, { backgroundColor: '#FF9800' }]}>
                 <Icon name="fire" size={24} color="white" />
@@ -356,7 +344,7 @@ const ProgressScreen: React.FC = () => {
               <Text style={styles.achievementText}>Week Streak</Text>
               <Text style={styles.achievementSubtext}>7 days</Text>
             </View>
-            
+
             <View style={styles.achievement}>
               <View style={[styles.achievementIcon, { backgroundColor: '#2196F3' }]}>
                 <Icon name="star" size={24} color="white" />

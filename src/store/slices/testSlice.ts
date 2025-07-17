@@ -46,7 +46,7 @@ export const startTestSession = createAsyncThunk(
     userId: string;
   }) => {
     const db = DatabaseService.getInstance();
-    
+
     // Fetch questions based on test type
     let questions: Question[] = [];
     if (params.type === 'category' && params.categoryId) {
@@ -58,7 +58,7 @@ export const startTestSession = createAsyncThunk(
       // Get random mix for practice or mock
       questions = await db.getRandomQuestions(params.numberOfQuestions);
     }
-    
+
     // Create test session
     const session: Omit<TestSession, 'id'> = {
       userId: params.userId,
@@ -68,71 +68,66 @@ export const startTestSession = createAsyncThunk(
       totalQuestions: questions.length,
       correctAnswers: 0,
       score: 0,
-      questions: questions.map(q => ({
+      questions: questions.map((q) => ({
         questionId: q.id,
         timeSpent: 0,
       })),
       completed: false,
     };
-    
+
     const sessionId = await db.createTestSession(session);
-    
+
     return {
       session: { ...session, id: sessionId } as TestSession,
       questions,
       timeLimit: params.timeLimit,
     };
-  }
+  },
 );
 
 export const submitAnswer = createAsyncThunk(
   'test/submitAnswer',
-  async (answer: {
-    questionId: string;
-    userAnswer: string;
-    isCorrect: boolean;
-    timeSpent: number;
-    confidence?: 'low' | 'medium' | 'high';
-  }, { getState }) => {
+  async (
+    answer: {
+      questionId: string;
+      userAnswer: string;
+      isCorrect: boolean;
+      timeSpent: number;
+      confidence?: 'low' | 'medium' | 'high';
+    },
+    { getState },
+  ) => {
     const state = getState() as { test: TestState };
     const db = DatabaseService.getInstance();
-    
+
     if (state.test.currentSession) {
-      await db.updateTestAnswer(
-        state.test.currentSession.id,
-        answer.questionId,
-        answer
-      );
+      await db.updateTestAnswer(state.test.currentSession.id, answer.questionId, answer);
     }
-    
+
     return answer;
-  }
+  },
 );
 
-export const endTestSession = createAsyncThunk(
-  'test/endSession',
-  async (_, { getState }) => {
-    const state = getState() as { test: TestState };
-    const db = DatabaseService.getInstance();
-    
-    if (state.test.currentSession) {
-      const correctAnswers = Object.values(state.test.answers)
-        .filter(a => a.isCorrect).length;
-      const score = (correctAnswers / state.test.questions.length) * 100;
-      
-      await db.updateTestSession(state.test.currentSession.id, {
-        endTime: new Date().toISOString(),
-        correctAnswers,
-        score,
-        completed: true,
-      });
-      
-      return { correctAnswers, score };
-    }
-    
-    return null;
+export const endTestSession = createAsyncThunk('test/endSession', async (_, { getState }) => {
+  const state = getState() as { test: TestState };
+  const db = DatabaseService.getInstance();
+
+  if (state.test.currentSession) {
+    const correctAnswers = Object.values(state.test.answers).filter((a) => a.isCorrect).length;
+    const score = (correctAnswers / state.test.questions.length) * 100;
+
+    await db.updateTestSession(state.test.currentSession.id, {
+      endTime: new Date().toISOString(),
+      correctAnswers,
+      score,
+      completed: true,
+    });
+
+    return { correctAnswers, score };
   }
-);
+
+  return null;
+});
 
 const testSlice = createSlice({
   name: 'test',
@@ -208,7 +203,7 @@ const testSlice = createSlice({
         state.timeRemaining = action.payload.timeLimit ? action.payload.timeLimit * 60 : 0;
         state.answers = {};
         state.isPaused = false;
-        
+
         // Set additional properties for compatibility
         state.currentQuestion = action.payload.questions[0] || null;
         state.questionIndex = 0;
@@ -223,11 +218,12 @@ const testSlice = createSlice({
       .addCase(submitAnswer.fulfilled, (state, action) => {
         const { questionId } = action.payload;
         state.answers[questionId] = action.payload as TestQuestion;
-        
+
         // Update session stats
         if (state.currentSession) {
-          state.currentSession.correctAnswers = Object.values(state.answers)
-            .filter(a => a.isCorrect).length;
+          state.currentSession.correctAnswers = Object.values(state.answers).filter(
+            (a) => a.isCorrect,
+          ).length;
         }
       })
       // End test session
@@ -252,7 +248,7 @@ export const selectTestProgress = (state: { test: TestState }) => {
   return {
     totalQuestions: questions.length,
     answeredQuestions: Object.keys(answers).length,
-    correctAnswers: Object.values(answers).filter(a => a.isCorrect).length,
+    correctAnswers: Object.values(answers).filter((a) => a.isCorrect).length,
     remainingQuestions: questions.length - Object.keys(answers).length,
   };
 };
@@ -268,4 +264,4 @@ export const {
   resetTest,
 } = testSlice.actions;
 
-export default testSlice.reducer; 
+export default testSlice.reducer;

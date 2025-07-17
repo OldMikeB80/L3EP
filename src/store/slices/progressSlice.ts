@@ -98,8 +98,16 @@ export const loadUserProgress = createAsyncThunk(
   'progress/loadUserProgress',
   async (userId: string) => {
     const db = DatabaseService.getInstance();
-    return await db.getUserProgress(userId);
-  }
+    const progressArray = await db.getUserProgress(userId);
+    
+    // Convert array to Record<string, UserProgress>
+    const progressRecord: Record<string, UserProgress> = {};
+    progressArray.forEach(progress => {
+      progressRecord[progress.categoryId] = progress;
+    });
+    
+    return progressRecord;
+  },
 );
 
 export const updateDailyProgress = createAsyncThunk(
@@ -113,25 +121,25 @@ export const updateDailyProgress = createAsyncThunk(
       categoriesStudied: [],
     });
     return stats;
-  }
+  },
 );
 
-export const loadWeeklyStats = createAsyncThunk(
-  'progress/loadWeekly',
-  async (userId: string) => {
-    const db = DatabaseService.getInstance();
-    return await db.getWeeklyStats(userId);
-  }
-);
+export const loadWeeklyStats = createAsyncThunk('progress/loadWeekly', async (userId: string) => {
+  const db = DatabaseService.getInstance();
+  return await db.getWeeklyStats(userId);
+});
 
 const progressSlice = createSlice({
   name: 'progress',
   initialState,
   reducers: {
-    incrementDailyStat: (state, action: PayloadAction<{
-      stat: 'questionsAttempted' | 'questionsCorrect' | 'studyTime';
-      value: number;
-    }>) => {
+    incrementDailyStat: (
+      state,
+      action: PayloadAction<{
+        stat: 'questionsAttempted' | 'questionsCorrect' | 'studyTime';
+        value: number;
+      }>,
+    ) => {
       const today = new Date().toISOString().split('T')[0];
       if (state.dailyStats.date !== today) {
         // Reset daily stats for new day
@@ -144,10 +152,13 @@ const progressSlice = createSlice({
       }
       state.dailyStats[action.payload.stat] += action.payload.value;
     },
-    updateCategoryProgress: (state, action: PayloadAction<{
-      categoryId: string;
-      progress: Partial<UserProgress>;
-    }>) => {
+    updateCategoryProgress: (
+      state,
+      action: PayloadAction<{
+        categoryId: string;
+        progress: Partial<UserProgress>;
+      }>,
+    ) => {
       const { categoryId, progress } = action.payload;
       state.categoryProgress[categoryId] = {
         ...state.categoryProgress[categoryId],
@@ -156,7 +167,7 @@ const progressSlice = createSlice({
     },
     checkAchievements: (state) => {
       // Check and update achievement progress
-      state.achievements.forEach(achievement => {
+      state.achievements.forEach((achievement) => {
         switch (achievement.id) {
           case 'quiz_master_100':
             achievement.progress = state.weeklyStats.totalQuestions;
@@ -166,7 +177,7 @@ const progressSlice = createSlice({
             break;
           // Add more achievement checks
         }
-        
+
         // Mark as unlocked if target reached
         if (achievement.progress >= achievement.target && !achievement.unlockedAt) {
           achievement.unlockedAt = new Date().toISOString();
@@ -208,11 +219,7 @@ const progressSlice = createSlice({
   },
 });
 
-export const {
-  incrementDailyStat,
-  updateCategoryProgress,
-  checkAchievements,
-  resetDailyStats,
-} = progressSlice.actions;
+export const { incrementDailyStat, updateCategoryProgress, checkAchievements, resetDailyStats } =
+  progressSlice.actions;
 
-export default progressSlice.reducer; 
+export default progressSlice.reducer;

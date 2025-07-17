@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Share,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, Chip, ProgressBar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -23,31 +16,35 @@ interface ResultCategory {
 }
 
 const TestResultsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
   const dispatch = useAppDispatch();
-  
+
   const { testSession } = useAppSelector((state) => state.test);
   const { currentUser } = useAppSelector((state) => state.user);
-  
+
   const [categoryBreakdown, setCategoryBreakdown] = useState<ResultCategory[]>([]);
   const [showDetailedResults, setShowDetailedResults] = useState(false);
 
   useEffect(() => {
     if (testSession) {
       // Update daily stats
-      dispatch(incrementDailyStat({
-        stat: 'questionsAttempted',
-        value: testSession.totalQuestions,
-      }));
-      dispatch(incrementDailyStat({
-        stat: 'questionsCorrect',
-        value: testSession.correctAnswers,
-      }));
-      
+      dispatch(
+        incrementDailyStat({
+          stat: 'questionsAttempted',
+          value: testSession.totalQuestions,
+        }),
+      );
+      dispatch(
+        incrementDailyStat({
+          stat: 'questionsCorrect',
+          value: testSession.correctAnswers,
+        }),
+      );
+
       // Check for new achievements
       dispatch(checkAchievements());
-      
+
       // Calculate category breakdown
       calculateCategoryBreakdown();
     }
@@ -82,11 +79,11 @@ const TestResultsScreen: React.FC = () => {
         percentage: 0,
       },
     ];
-    
-    breakdown.forEach(cat => {
+
+    breakdown.forEach((cat) => {
       cat.percentage = (cat.correct / cat.total) * 100;
     });
-    
+
     setCategoryBreakdown(breakdown);
   };
 
@@ -108,7 +105,7 @@ const TestResultsScreen: React.FC = () => {
   };
 
   const handleReviewAnswers = () => {
-    navigation.navigate('ReviewAnswers' as never, { sessionId: testSession?.id });
+    navigation.navigate('ReviewAnswers' as any, { sessionId: testSession?.id });
   };
 
   const getScoreColor = (score: number) => {
@@ -118,10 +115,10 @@ const TestResultsScreen: React.FC = () => {
   };
 
   const getPerformanceMessage = (score: number) => {
-    if (score >= 90) return 'Outstanding! You\'re well prepared!';
+    if (score >= 90) return "Outstanding! You're well prepared!";
     if (score >= 80) return 'Great job! Keep up the excellent work!';
     if (score >= 70) return 'Good performance! A bit more practice will help.';
-    if (score >= 60) return 'You\'re getting there! Focus on weak areas.';
+    if (score >= 60) return "You're getting there! Focus on weak areas.";
     return 'Keep practicing! Review the material and try again.';
   };
 
@@ -157,7 +154,7 @@ const TestResultsScreen: React.FC = () => {
             </Text>
             <Text style={styles.scoreLabel}>Your Score</Text>
           </View>
-          
+
           {/* Temporarily disabled PieChart until chart library is properly configured
           <View style={styles.pieChartContainer}>
             <PieChart
@@ -188,20 +185,19 @@ const TestResultsScreen: React.FC = () => {
       <Card style={styles.messageCard}>
         <Card.Content>
           <View style={styles.messageHeader}>
-            <Icon 
-              name={testSession.score >= 70 ? 'emoticon-happy' : 'emoticon-neutral'} 
-              size={24} 
-              color={getScoreColor(testSession.score)} 
+            <Icon
+              name={testSession.score >= 70 ? 'emoticon-happy' : 'emoticon-neutral'}
+              size={24}
+              color={getScoreColor(testSession.score)}
             />
-            <Title style={styles.messageTitle}>
-              {getPerformanceMessage(testSession.score)}
-            </Title>
+            <Title style={styles.messageTitle}>{getPerformanceMessage(testSession.score)}</Title>
           </View>
-          
+
           <Paragraph style={styles.messageText}>
-            You answered {testSession.correctAnswers} out of {testSession.totalQuestions} questions correctly.
-            {testSession.score >= 70 
-              ? ' You passed the practice test!' 
+            You answered {testSession.correctAnswers} out of {testSession.totalQuestions} questions
+            correctly.
+            {testSession.score >= 70
+              ? ' You passed the practice test!'
               : ' The passing score is 70%.'}
           </Paragraph>
         </Card.Content>
@@ -211,13 +207,13 @@ const TestResultsScreen: React.FC = () => {
       <Card style={styles.summaryCard}>
         <Card.Content>
           <Title style={styles.sectionTitle}>Test Summary</Title>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="help-circle" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Total Questions:</Text>
             <Text style={styles.summaryValue}>{testSession.totalQuestions}</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="check-circle" size={20} color="#4CAF50" />
             <Text style={styles.summaryLabel}>Correct Answers:</Text>
@@ -225,7 +221,7 @@ const TestResultsScreen: React.FC = () => {
               {testSession.correctAnswers}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="close-circle" size={20} color="#F44336" />
             <Text style={styles.summaryLabel}>Incorrect Answers:</Text>
@@ -233,12 +229,14 @@ const TestResultsScreen: React.FC = () => {
               {testSession.totalQuestions - testSession.correctAnswers}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Icon name="timer" size={20} color="#666" />
             <Text style={styles.summaryLabel}>Time Taken:</Text>
             <Text style={styles.summaryValue}>
-              {testSession.duration ? `${Math.floor(testSession.duration / 60)}m ${testSession.duration % 60}s` : 'N/A'}
+              {testSession.duration
+                ? `${Math.floor(testSession.duration / 60)}m ${testSession.duration % 60}s`
+                : 'N/A'}
             </Text>
           </View>
         </Card.Content>
@@ -247,33 +245,34 @@ const TestResultsScreen: React.FC = () => {
       {/* Category Breakdown */}
       <Card style={styles.breakdownCard}>
         <Card.Content>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.breakdownHeader}
             onPress={() => setShowDetailedResults(!showDetailedResults)}
           >
             <Title style={styles.sectionTitle}>Category Performance</Title>
-            <Icon 
-              name={showDetailedResults ? 'chevron-up' : 'chevron-down'} 
-              size={24} 
-              color="#666" 
+            <Icon
+              name={showDetailedResults ? 'chevron-up' : 'chevron-down'}
+              size={24}
+              color="#666"
             />
           </TouchableOpacity>
-          
-          {showDetailedResults && categoryBreakdown.map((category, index) => (
-            <View key={index} style={styles.categoryItem}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryName}>{category.name}</Text>
-                <Text style={styles.categoryScore}>
-                  {category.correct}/{category.total} ({category.percentage.toFixed(0)}%)
-                </Text>
+
+          {showDetailedResults &&
+            categoryBreakdown.map((category, index) => (
+              <View key={index} style={styles.categoryItem}>
+                <View style={styles.categoryHeader}>
+                  <Text style={styles.categoryName}>{category.name}</Text>
+                  <Text style={styles.categoryScore}>
+                    {category.correct}/{category.total} ({category.percentage.toFixed(0)}%)
+                  </Text>
+                </View>
+                <ProgressBar
+                  progress={category.percentage / 100}
+                  color={getScoreColor(category.percentage)}
+                  style={styles.categoryProgress}
+                />
               </View>
-              <ProgressBar 
-                progress={category.percentage / 100} 
-                color={getScoreColor(category.percentage)} 
-                style={styles.categoryProgress}
-              />
-            </View>
-          ))}
+            ))}
         </Card.Content>
       </Card>
 
@@ -285,19 +284,15 @@ const TestResultsScreen: React.FC = () => {
               <Icon name="lightbulb" size={24} color="#FFC107" />
               <Title style={styles.recommendationTitle}>Study Recommendations</Title>
             </View>
-            
+
             <Paragraph style={styles.recommendationText}>
               Based on your performance, we recommend focusing on:
             </Paragraph>
-            
+
             {categoryBreakdown
-              .filter(cat => cat.percentage < 70)
+              .filter((cat) => cat.percentage < 70)
               .map((cat, index) => (
-                <Chip 
-                  key={index} 
-                  style={styles.recommendationChip}
-                  icon="book-open-variant"
-                >
+                <Chip key={index} style={styles.recommendationChip} icon="book-open-variant">
                   {cat.name}
                 </Chip>
               ))}
@@ -315,13 +310,8 @@ const TestResultsScreen: React.FC = () => {
         >
           Review Answers
         </Button>
-        
-        <Button
-          mode="contained"
-          onPress={handleReturnHome}
-          style={styles.actionButton}
-          icon="home"
-        >
+
+        <Button mode="contained" onPress={handleReturnHome} style={styles.actionButton} icon="home">
           Return Home
         </Button>
       </View>
@@ -500,4 +490,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TestResultsScreen; 
+export default TestResultsScreen;

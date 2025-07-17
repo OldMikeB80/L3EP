@@ -17,6 +17,7 @@ A comprehensive React Native application designed to help NDT (Non-Destructive T
 ## Design
 
 The app features a distinctive maize and blue color scheme:
+
 - Primary: Michigan Blue (#00274C)
 - Accent: Michigan Maize (#FFCB05)
 
@@ -64,6 +65,7 @@ npm run ios
 ## Development
 
 The app includes development tools accessible when running in debug mode:
+
 - Force seed database with sample questions
 - View current data statistics
 - Debug information overlay
