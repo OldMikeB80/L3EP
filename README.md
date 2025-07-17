@@ -1,79 +1,101 @@
 # L3EP - Level 3 Exam Prep
 
-A comprehensive React Native application designed to help NDT (Non-Destructive Testing) professionals prepare for their ASNT Level III certification exams.
+ASNT Level III certification exam preparation app for Android devices, optimized for Samsung Galaxy.
 
 ## Features
 
-- **Study Mode**: Review questions at your own pace with detailed explanations
-- **Practice Tests**: Take 15-question practice tests to assess your knowledge
-- **Mock Exams**: Simulate the full 150-question certification exam experience
-- **Progress Tracking**: Monitor your performance across different categories
-- **Category Focus**: Study specific topics like:
-  - Certification Standards (SNT-TC-1A, CP-189, ISO 9712)
-  - Materials & Processes
-  - NDT Methods (PT, MT, RT, UT, ET, VT, etc.)
-  - Safety & Quality
+- **Study Mode**: Browse questions by category with immediate feedback
+- **Practice Tests**: Take 15-question tests to assess your knowledge
+- **Mock Exams**: Full 150-question exams simulating the real certification test
+- **Progress Tracking**: Monitor your performance across categories
+- **Offline Support**: All questions stored locally for offline access
+- **Michigan Theme**: Maize (#FFCB05) and Blue (#00274C) color scheme
 
-## Design
+## Technical Stack
 
-The app features a distinctive maize and blue color scheme:
-
-- Primary: Michigan Blue (#00274C)
-- Accent: Michigan Maize (#FFCB05)
-
-## Tech Stack
-
-- React Native 0.80.1
-- TypeScript
+- React Native 0.80.1 (New Architecture enabled)
+- TypeScript with strict mode
 - Redux Toolkit for state management
 - SQLite for local data storage
 - React Navigation for routing
 - React Native Paper for UI components
+- Optimized for Samsung Galaxy devices
 
-## Getting Started
+## Setup Instructions
 
 ### Prerequisites
 
-- Node.js >= 18
-- React Native development environment set up
-- Android Studio (for Android development)
-- Xcode (for iOS development, macOS only)
+- Node.js 18+
+- Java JDK 17
+- Android Studio with Android SDK
+- Android device or emulator (API 24+)
 
 ### Installation
 
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone [repository-url]
+git clone https://github.com/GeckoRobotics/L3EP.git
 cd L3EP
+```
 
-# Install dependencies
+2. Install dependencies:
+```bash
 npm install
+```
 
-# iOS only
-cd ios && pod install && cd ..
-
-# Start Metro bundler
+3. Start Metro bundler:
+```bash
 npm start
+```
 
-# Run on Android
+4. Run on Android:
+```bash
 npm run android
+```
 
-# Run on iOS
-npm run ios
+### Building for Release
+
+1. Generate signed APK:
+```bash
+cd android && ./gradlew assembleRelease
+```
+
+2. Generate AAB for Play Store:
+```bash
+cd android && ./gradlew bundleRelease
+```
+
+## Project Structure
+
+```
+L3EP/
+├── src/
+│   ├── screens/          # App screens
+│   ├── store/           # Redux store and slices
+│   ├── services/        # Database and other services
+│   ├── models/          # TypeScript interfaces
+│   ├── data/            # Seed questions data
+│   ├── constants/       # App constants (colors, etc.)
+│   └── utils/           # Utility functions
+├── android/             # Android-specific code
+└── __tests__/          # Test files
 ```
 
 ## Development
 
-The app includes development tools accessible when running in debug mode:
+- Run linter: `npm run lint`
+- Format code: `npm run format`
+- Run tests: `npm test`
+- Clean build: `npm run clean:android`
 
-- Force seed database with sample questions
-- View current data statistics
-- Debug information overlay
+## Samsung Galaxy Optimizations
 
-## Build Issues
-
-If you encounter build issues, refer to `BUILD_ISSUES.md` for common solutions.
+- Hardware acceleration enabled
+- RenderScript support for graphics
+- Optimized for ARM architectures (armeabi-v7a, arm64-v8a)
+- R8 full mode for better code optimization
+- Resource shrinking for smaller APK size
 
 ## License
 
-This project is proprietary software. All rights reserved.
+Proprietary - Gecko Robotics, Inc.
