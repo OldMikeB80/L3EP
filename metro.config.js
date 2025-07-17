@@ -18,6 +18,17 @@ const config = {
       '@data': path.resolve(__dirname, 'src/data'),
       '@constants': path.resolve(__dirname, 'src/constants'),
       '@utils': path.resolve(__dirname, 'src/utils'),
+      'abort-controller': path.resolve(__dirname, 'node_modules/abort-controller'),
+    },
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName === 'abort-controller/dist/abort-controller') {
+        return {
+          filePath: require.resolve('abort-controller/dist/abort-controller'),
+          type: 'sourceFile',
+        };
+      }
+      // Let Metro handle other modules
+      return context.resolveRequest(context, moduleName, platform);
     },
   },
   watchFolders: [path.resolve(__dirname, 'src')],
