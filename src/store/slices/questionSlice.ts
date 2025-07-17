@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Question, Category, QuestionBank } from '@models/Question';
 import { DatabaseService } from '@services/database/DatabaseService';
+import { diagnostics } from '../../utils/diagnostics';
 
 interface QuestionState {
   questions: Question[];
@@ -26,6 +27,7 @@ const initialState: QuestionState = {
 
 // Async thunks
 export const loadCategories = createAsyncThunk('questions/loadCategories', async () => {
+  diagnostics.trackDataLoad('loadCategories');
   const db = DatabaseService.getInstance();
   return await db.getCategories();
 });
@@ -39,6 +41,7 @@ export const loadQuestionsByCategory = createAsyncThunk(
 );
 
 export const loadAllQuestions = createAsyncThunk('questions/loadAll', async () => {
+  diagnostics.trackDataLoad('loadAllQuestions');
   const db = DatabaseService.getInstance();
   return await db.getAllQuestions();
 });

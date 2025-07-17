@@ -1,4 +1,4 @@
-package com.ndtexamprep
+package com.geckorobotics.l3ep
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -57,7 +57,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'SNT-TC-1A clearly states that the employer is responsible for the certification of NDT personnel. This is a fundamental principle of the recommended practice.',
     difficulty: 'easy',
-    references: ['SNT-TC-1A Section 1.4'],
+          reference_texts: ['SNT-TC-1A Section 1.4'],
     tags: ['SNT-TC-1A', 'Certification', 'Responsibility'],
   },
   {
@@ -74,7 +74,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'SNT-TC-1A recommends a minimum of 40 hours of documented training for Level II UT certification.',
     difficulty: 'medium',
-    references: ['SNT-TC-1A Table 6.3.1A'],
+          reference_texts: ['SNT-TC-1A Table 6.3.1A'],
     tags: ['SNT-TC-1A', 'Training Hours', 'UT'],
   },
   {
@@ -90,7 +90,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'CP-189 specifies that ACCP certifications are valid for 5 years from the date of issue.',
     difficulty: 'easy',
-    references: ['ANSI/ASNT CP-189 Section 10'],
+          reference_texts: ['ANSI/ASNT CP-189 Section 10'],
     tags: ['CP-189', 'ACCP', 'Validity Period'],
   },
 
@@ -108,7 +108,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Medium carbon steels contain 0.30% to 0.60% carbon. This range provides a balance between strength and ductility.',
     difficulty: 'medium',
-    references: ['Materials Science Handbook'],
+    reference_texts: ['Materials Science Handbook'],
     tags: ['Materials', 'Carbon Steel', 'Metallurgy'],
   },
   {
@@ -125,7 +125,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Lack of fusion occurs when there is no metallurgical bond between the weld metal and base metal or between successive weld passes.',
     difficulty: 'easy',
-    references: ['AWS D1.1', 'Welding Inspection Handbook'],
+    reference_texts: ['AWS D1.1', 'Welding Inspection Handbook'],
     tags: ['Welding', 'Defects', 'Lack of Fusion'],
   },
 
@@ -143,7 +143,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Lower frequencies have longer wavelengths and greater penetration ability, while higher frequencies provide better resolution but less penetration.',
     difficulty: 'medium',
-    references: ['UT Level III Study Guide', 'ASNT Handbook'],
+    reference_texts: ['UT Level III Study Guide', 'ASNT Handbook'],
     tags: ['UT', 'Frequency', 'Penetration'],
   },
   {
@@ -159,7 +159,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Developer draws penetrant from discontinuities through capillary action and provides a contrasting background for indication visibility.',
     difficulty: 'easy',
-    references: ['ASTM E165', 'PT Level III Study Guide'],
+    reference_texts: ['ASTM E165', 'PT Level III Study Guide'],
     tags: ['PT', 'Developer', 'Capillary Action'],
     formulaLatex: 'h = \\frac{2\\gamma \\cos\\theta}{\\rho g r}',
   },
@@ -176,7 +176,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Lead screens serve dual purposes: they filter out scatter radiation and emit electrons when struck by primary radiation, intensifying the image.',
     difficulty: 'medium',
-    references: ['ASNT RT Level III Study Guide', 'ASTM E94'],
+    reference_texts: ['ASNT RT Level III Study Guide', 'ASTM E94'],
     tags: ['RT', 'Lead Screens', 'Image Quality'],
   },
 
@@ -195,7 +195,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'The NRC sets the annual occupational dose limit at 5 rem (50 mSv) for whole body exposure.',
     difficulty: 'medium',
-    references: ['10 CFR 20', 'NRC Regulations'],
+    reference_texts: ['10 CFR 20', 'NRC Regulations'],
     tags: ['Safety', 'Radiation', 'Regulations'],
   },
   {
@@ -212,7 +212,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'ISO 9712 specifies requirements for qualification and certification of NDT personnel.',
     difficulty: 'easy',
-    references: ['ISO 9712:2021'],
+    reference_texts: ['ISO 9712:2021'],
     tags: ['ISO', 'Certification', 'Standards'],
   },
 
@@ -233,7 +233,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'The dead zone is the region immediately beneath the probe face where defects cannot be detected due to the transmission pulse and near-field effects.',
     difficulty: 'medium',
-    references: ['ASNT UT Level III Study Guide'],
+    reference_texts: ['ASNT UT Level III Study Guide'],
     tags: ['UT', 'Dead Zone', 'Limitations'],
   },
   {
@@ -250,7 +250,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Lower frequencies provide better penetration in conductive materials. 1 kHz offers good penetration in aluminum while maintaining reasonable sensitivity.',
     difficulty: 'hard',
-    references: ['ASNT ET Level III Study Guide'],
+    reference_texts: ['ASNT ET Level III Study Guide'],
     tags: ['ET', 'Frequency', 'Penetration'],
     formulaLatex: '\\delta = \\sqrt{\\frac{2}{\\omega\\mu\\sigma}}',
   },
@@ -268,7 +268,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Phased array UT allows electronic beam steering and focusing without moving the probe, enabling rapid inspection of complex geometries.',
     difficulty: 'medium',
-    references: ['ASNT PAUT Study Guide', 'ISO 13588'],
+    reference_texts: ['ASNT PAUT Study Guide', 'ISO 13588'],
     tags: ['PAUT', 'Advanced UT', 'Beam Steering'],
   },
 
@@ -286,7 +286,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Hydrogen cracking (cold cracking) typically occurs in the HAZ due to hydrogen embrittlement, residual stress, and susceptible microstructure.',
     difficulty: 'medium',
-    references: ['AWS D1.1', 'Welding Metallurgy'],
+    reference_texts: ['AWS D1.1', 'Welding Metallurgy'],
     tags: ['Welding', 'HAZ', 'Defects'],
   },
   {
@@ -302,7 +302,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'The IIW carbon equivalent formula considers the effect of various alloying elements on hardenability and weldability.',
     difficulty: 'hard',
-    references: ['IIW Guidelines', 'AWS D1.1'],
+    reference_texts: ['IIW Guidelines', 'AWS D1.1'],
     tags: ['Welding', 'Carbon Equivalent', 'Weldability'],
     formulaLatex: 'CE = C + \\frac{Mn}{6} + \\frac{Cr+Mo+V}{5} + \\frac{Ni+Cu}{15}',
   },
@@ -320,7 +320,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Stress relieving involves heating below the transformation temperature to relieve residual stresses without significantly changing mechanical properties.',
     difficulty: 'easy',
-    references: ['ASM Handbook Vol. 4', 'Heat Treatment Guide'],
+    reference_texts: ['ASM Handbook Vol. 4', 'Heat Treatment Guide'],
     tags: ['Heat Treatment', 'Stress Relief', 'Post-weld'],
   },
 
@@ -339,7 +339,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'SNT-TC-1A requires near vision acuity of Jaeger J2 at not less than 12 inches for NDT personnel.',
     difficulty: 'easy',
-    references: ['ASNT SNT-TC-1A', 'CP-189'],
+    reference_texts: ['ASNT SNT-TC-1A', 'CP-189'],
     tags: ['Vision', 'Personnel Requirements', 'Certification'],
   },
   {
@@ -355,7 +355,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'CP-189 is an ANSI/ASNT standard with mandatory requirements, while SNT-TC-1A is a recommended practice providing guidelines.',
     difficulty: 'medium',
-    references: ['ASNT CP-189', 'ASNT SNT-TC-1A'],
+    reference_texts: ['ASNT CP-189', 'ASNT SNT-TC-1A'],
     tags: ['Standards', 'Certification', 'ASNT'],
   },
 
@@ -373,7 +373,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'ALARA (As Low As Reasonably Achievable) is the principle of minimizing radiation exposure by considering economic and social factors.',
     difficulty: 'easy',
-    references: ['10 CFR 20', 'Radiation Safety Guide'],
+    reference_texts: ['10 CFR 20', 'Radiation Safety Guide'],
     tags: ['Radiation Safety', 'ALARA', 'Best Practices'],
   },
   {
@@ -389,7 +389,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'CAPA (Corrective And Preventive Action) is a systematic approach to eliminate causes of non-conformities and prevent recurrence.',
     difficulty: 'medium',
-    references: ['ISO 9001:2015', 'Quality Management Systems'],
+    reference_texts: ['ISO 9001:2015', 'Quality Management Systems'],
     tags: ['Quality', 'CAPA', 'ISO 9001'],
   },
   {
@@ -405,7 +405,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Root cause analysis aims to identify the fundamental cause of a problem to implement effective corrective actions and prevent recurrence.',
     difficulty: 'easy',
-    references: ['Quality Tools', 'Problem Solving Methods'],
+    reference_texts: ['Quality Tools', 'Problem Solving Methods'],
     tags: ['Quality', 'Root Cause Analysis', 'Problem Solving'],
   },
 
@@ -423,7 +423,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'The Kaiser effect is the absence of detectable acoustic emissions until the previous maximum applied stress level is exceeded.',
     difficulty: 'hard',
-    references: ['ASNT AE Level III Study Guide', 'ASTM E1316'],
+    reference_texts: ['ASNT AE Level III Study Guide', 'ASTM E1316'],
     tags: ['AE', 'Kaiser Effect', 'Stress History'],
   },
   {
@@ -439,7 +439,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Wet fluorescent particles with DC magnetization provide the highest sensitivity due to particle mobility and fluorescent contrast.',
     difficulty: 'medium',
-    references: ['ASNT MT Level III Study Guide', 'ASTM E1444'],
+    reference_texts: ['ASNT MT Level III Study Guide', 'ASTM E1444'],
     tags: ['MT', 'Sensitivity', 'Techniques'],
   },
   {
@@ -455,7 +455,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Lift-off effect is the change in coil impedance caused by variations in the distance between the probe and test surface.',
     difficulty: 'medium',
-    references: ['ASNT ET Level III Study Guide'],
+    reference_texts: ['ASNT ET Level III Study Guide'],
     tags: ['ET', 'Lift-off', 'Probe Effects'],
   },
 
@@ -474,7 +474,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Austenitic stainless steels are susceptible to chloride-induced stress corrosion cracking, typically occurring as transgranular cracking.',
     difficulty: 'hard',
-    references: ['ASM Handbook Vol. 13', 'NACE Standards'],
+    reference_texts: ['ASM Handbook Vol. 13', 'NACE Standards'],
     tags: ['SCC', 'Stainless Steel', 'Corrosion'],
   },
   {
@@ -490,7 +490,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Trailing shields provide inert gas coverage to protect the hot weld and HAZ from atmospheric contamination during cooling.',
     difficulty: 'medium',
-    references: ['AWS G2.4', 'Titanium Welding Guide'],
+    reference_texts: ['AWS G2.4', 'Titanium Welding Guide'],
     tags: ['Titanium', 'Welding', 'Shielding'],
   },
   {
@@ -506,7 +506,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Sensitization in 304 SS occurs when exposed to 800-1500°F, causing chromium carbide precipitation at grain boundaries.',
     difficulty: 'hard',
-    references: ['ASM Handbook', 'Stainless Steel Properties'],
+    reference_texts: ['ASM Handbook', 'Stainless Steel Properties'],
     tags: ['Sensitization', '304 SS', 'Heat Treatment'],
   },
 
@@ -525,7 +525,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'NAS-410 requires requalification if an individual has not performed NDT in the method for 12 continuous months.',
     difficulty: 'medium',
-    references: ['NAS-410 Rev. 4', 'Aerospace NDT Standards'],
+    reference_texts: ['NAS-410 Rev. 4', 'Aerospace NDT Standards'],
     tags: ['NAS-410', 'Requalification', 'Aerospace'],
   },
   {
@@ -541,7 +541,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'ASME Boiler and Pressure Vessel Code Section V provides NDT methods and requirements for nuclear applications.',
     difficulty: 'easy',
-    references: ['ASME BPVC Section V', 'Nuclear Codes'],
+    reference_texts: ['ASME BPVC Section V', 'Nuclear Codes'],
     tags: ['ASME', 'Nuclear', 'Code Requirements'],
   },
 
@@ -559,7 +559,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'Confined spaces present dual hazards: radiation exposure with limited escape routes and potential oxygen deficiency.',
     difficulty: 'medium',
-    references: ['OSHA Confined Space Standards', 'Radiation Safety Manual'],
+    reference_texts: ['OSHA Confined Space Standards', 'Radiation Safety Manual'],
     tags: ['Confined Space', 'RT Safety', 'Hazards'],
   },
   {
@@ -575,7 +575,7 @@ export const sampleQuestions: Partial<Question>[] = [
     explanation:
       'TOFD probe separation is typically 1.5 to 2 times the wall thickness for optimal coverage of the weld volume.',
     difficulty: 'hard',
-    references: ['ASME Code Case 2235', 'TOFD Handbook'],
+    reference_texts: ['ASME Code Case 2235', 'TOFD Handbook'],
     tags: ['TOFD', 'Probe Setup', 'Weld Inspection'],
     formulaLatex: 'PCS = 2 \\times t \\times \\tan(\\theta)',
   },
@@ -613,7 +613,7 @@ export async function seedDatabase() {
         correctAnswer: questionData.correctAnswer!,
         explanation: questionData.explanation!,
         difficulty: questionData.difficulty as 'easy' | 'medium' | 'hard',
-        references: questionData.references,
+        reference_texts: questionData.reference_texts,
         tags: questionData.tags,
         formulaLatex: questionData.formulaLatex,
         createdAt: new Date().toISOString(),

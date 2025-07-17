@@ -1,4 +1,5 @@
 {
-  "name": "L3EP",
-  "displayName": "L3EP - Level 3 Exam Prep"
+  "name": "NDTExamPrep",
+  "displayName": "L3EP - Level 3 Exam Prep",
+  "androidPackageName": "com.geckorobotics.l3ep"
 }

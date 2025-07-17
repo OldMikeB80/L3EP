@@ -1,4 +1,4 @@
-package com.ndtexamprep
+package com.geckorobotics.l3ep
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

@@ -16,9 +16,12 @@ const CategoriesScreen: React.FC = () => {
   const { categoryProgress } = useAppSelector((state) => state.progress);
 
   useEffect(() => {
-    console.log('CategoriesScreen: Loading categories...');
-    dispatch(loadCategories());
-  }, [dispatch]);
+    // Only load if categories are empty
+    if (categories.length === 0) {
+      console.log('CategoriesScreen: Loading categories...');
+      dispatch(loadCategories());
+    }
+  }, [dispatch, categories.length]);
 
   useEffect(() => {
     console.log('CategoriesScreen: Categories loaded:', categories);

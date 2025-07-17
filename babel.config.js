@@ -23,6 +23,7 @@ module.exports = {
           '@models': './src/models',
           '@data': './src/data',
           '@constants': './src/constants',
+          '@utils': './src/utils',
         },
       },
     ],

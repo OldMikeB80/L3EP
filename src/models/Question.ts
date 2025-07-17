@@ -9,7 +9,7 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard';
   imageUrl?: string;
   formulaLatex?: string;
-  references?: string[];
+  reference_texts?: string[];
   tags?: string[];
   isBookmarked?: boolean;
   timesAnswered?: number;

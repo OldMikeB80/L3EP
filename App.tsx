@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -24,6 +24,7 @@ import { seedDatabase } from '@data/seedQuestions';
 import { loadSettingsFromStorage } from '@store/slices/settingsSlice';
 import { loadUser, createUser } from '@store/slices/userSlice';
 import { loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
+import { diagnostics } from './src/utils/diagnostics';
 import { colors } from '@constants/colors';
 
 // Screens
@@ -34,6 +35,9 @@ import TestResultsScreen from '@screens/TestResultsScreen';
 import MockExamSetupScreen from '@screens/MockExamSetupScreen';
 import StudyModeScreen from '@screens/StudyModeScreen';
 import CategoriesScreen from '@screens/CategoriesScreen';
+import CategoryDetailScreen from '@screens/CategoryDetailScreen';
+import SettingsScreen from '@screens/SettingsScreen';
+import QuestionDetailScreen from '@screens/QuestionDetailScreen';
 
 // Navigation types
 export type RootStackParamList = {
@@ -133,9 +137,9 @@ const ProfileScreen = () => {
   );
 };
 
-const CategoryDetailScreen = () => <PlaceholderScreen title="Category Details" />;
-const SettingsScreen = () => <PlaceholderScreen title="Settings" />;
-const QuestionDetailScreen = () => <PlaceholderScreen title="Question Details" />;
+
+
+
 
 const placeholderStyles = StyleSheet.create({
   container: {
@@ -329,6 +333,26 @@ const DebugUI = () => {
           Clear & Reseed
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          const report = diagnostics.getReport();
+          console.log('📊 DIAGNOSTICS REPORT:', report);
+          Alert.alert(
+            'Diagnostics',
+            `Data Loads: ${report.summary.totalDataLoads}\nNavigations: ${report.summary.totalNavigations}\nErrors: ${report.summary.totalErrors}`
+          );
+        }}
+        style={{
+          marginTop: 5,
+          backgroundColor: colors.info,
+          padding: 5,
+          borderRadius: 3,
+        }}
+      >
+        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
+          Show Diagnostics
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -368,6 +392,15 @@ const App = () => {
   // };
 
   useEffect(() => {
+    // Set up global error handler
+    const errorHandler = (error: Error, isFatal: boolean) => {
+      diagnostics.logError(error, { isFatal });
+      console.error('Global error caught:', error, 'Fatal:', isFatal);
+    };
+    
+    // @ts-ignore
+    global.ErrorUtils.setGlobalHandler(errorHandler);
+    
     const initializeApp = async () => {
       try {
         // Initialize database
@@ -405,8 +438,17 @@ const App = () => {
         // Load user settings
         store.dispatch(loadSettingsFromStorage());
 
-        // Load current user
-        store.dispatch(loadUser());
+        // Load current user or create default
+        const userResult = await store.dispatch(loadUser()).unwrap();
+        if (!userResult) {
+          console.log('No user found, creating default user...');
+          await store.dispatch(createUser({
+            name: 'Test User',
+            email: 'test@example.com',
+            dailyStudyGoal: 30,
+            notificationsEnabled: true,
+          }) as any);
+        }
 
         // Hide splash screen
         // SplashScreen.hide(); // Temporarily disabled

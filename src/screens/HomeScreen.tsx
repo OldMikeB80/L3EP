@@ -86,24 +86,28 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.debugText}>Categories loaded: {categories.length}</Text>
               <Text style={styles.debugText}>Questions loaded: {questions.length}</Text>
               <Text style={styles.debugText}>Loading: {isLoading ? 'Yes' : 'No'}</Text>
-              <Button
-                mode="contained"
-                onPress={async () => {
-                  console.log('Manual seed triggered');
-                  const db = DatabaseService.getInstance();
-                  await seedDatabase();
-                  // Force reload after seeding
-                  setTimeout(() => {
-                    dispatch(loadCategories());
-                    dispatch(loadAllQuestions());
-                    console.log('Data reload triggered');
-                  }, 500);
-                }}
-                style={styles.seedButton}
-                buttonColor={colors.success}
-              >
-                Force Seed Database
-              </Button>
+                        <Button
+            mode="contained"
+            onPress={async () => {
+              console.log('Manual seed triggered');
+              try {
+                const db = DatabaseService.getInstance();
+                await seedDatabase();
+                // Force reload after seeding
+                setTimeout(() => {
+                  dispatch(loadCategories());
+                  dispatch(loadAllQuestions());
+                  console.log('Data reload triggered');
+                }, 500);
+              } catch (error) {
+                console.error('Error seeding database:', error);
+              }
+            }}
+            style={styles.seedButton}
+            buttonColor={colors.success}
+          >
+            Force Seed Database
+          </Button>
             </Card.Content>
           </Card>
         )}
