@@ -78,39 +78,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Debug Info - Only in Development */}
-        {__DEV__ && (
-          <Card style={styles.debugCard}>
-            <Card.Content>
-              <Text style={styles.debugTitle}>Debug Info:</Text>
-              <Text style={styles.debugText}>Categories loaded: {categories.length}</Text>
-              <Text style={styles.debugText}>Questions loaded: {questions.length}</Text>
-              <Text style={styles.debugText}>Loading: {isLoading ? 'Yes' : 'No'}</Text>
-                        <Button
-            mode="contained"
-            onPress={async () => {
-              console.log('Manual seed triggered');
-              try {
-                const db = DatabaseService.getInstance();
-                await seedDatabase();
-                // Force reload after seeding
-                setTimeout(() => {
-                  dispatch(loadCategories());
-                  dispatch(loadAllQuestions());
-                  console.log('Data reload triggered');
-                }, 500);
-              } catch (error) {
-                console.error('Error seeding database:', error);
-              }
-            }}
-            style={styles.seedButton}
-            buttonColor={colors.success}
-          >
-            Force Seed Database
-          </Button>
-            </Card.Content>
-          </Card>
-        )}
+        {/* Debug banner removed for production */}
 
         {/* Header */}
         <View style={styles.header}>
@@ -262,23 +230,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   debugCard: {
-    margin: 16,
-    backgroundColor: colors.accentLight,
-    borderWidth: 2,
-    borderColor: colors.accent,
-    elevation: 3,
+    display: 'none',
   },
   debugTitle: {
-    fontWeight: 'bold',
-    color: colors.textOnAccent,
-    fontSize: 16,
+    display: 'none',
   },
   debugText: {
-    color: colors.textOnAccent,
-    fontSize: 14,
+    display: 'none',
   },
   seedButton: {
-    marginTop: 10,
+    display: 'none',
   },
   header: {
     backgroundColor: colors.primary,

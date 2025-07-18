@@ -574,7 +574,20 @@ export class DatabaseService {
 
       const categories: Category[] = [];
       for (let i = 0; i < results[0].rows.length; i++) {
-        categories.push(results[0].rows.item(i));
+        const row = results[0].rows.item(i);
+
+        // Map DB column names (snake_case) ➜ camelCase expected by the app
+        categories.push({
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          icon: row.icon,
+          color: row.color,
+          totalQuestions: row.total_questions,
+          requiredPassPercentage: row.required_pass_percentage,
+          // The DB doesn’t store subcategories inline – initialise empty list to avoid undefined access
+          subcategories: [],
+        });
       }
 
       return categories;

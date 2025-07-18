@@ -522,7 +522,6 @@ const AppContent = () => {
           />
         </Stack.Navigator>
       </NavigationContainer>
-      <DebugUI />
     </>
   );
 };

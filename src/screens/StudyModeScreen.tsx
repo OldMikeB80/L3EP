@@ -300,7 +300,7 @@ const StudyModeScreen: React.FC = () => {
       </ScrollView>
 
       {/* Progress Bar */}
-      {viewMode === 'card' && (
+      {viewMode === 'card' && filteredQuestions.length > 0 && (
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>
             {currentIndex + 1} / {filteredQuestions.length}
@@ -309,7 +309,12 @@ const StudyModeScreen: React.FC = () => {
             <View
               style={[
                 styles.progressFill,
-                { width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%` },
+                {
+                  width: `${Math.min(
+                    100,
+                    ((currentIndex + 1) / filteredQuestions.length) * 100,
+                  )}%`,
+                },
               ]}
             />
           </View>

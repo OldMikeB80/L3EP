@@ -9,6 +9,11 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard';
   imageUrl?: string;
   formulaLatex?: string;
+  /**
+   * Array of reference strings (e.g. codes / standards) associated with the question.
+   */
+  references?: string[];
+  /** @deprecated retained for backwards compatibility – use `references` instead */
   reference_texts?: string[];
   tags?: string[];
   isBookmarked?: boolean;
