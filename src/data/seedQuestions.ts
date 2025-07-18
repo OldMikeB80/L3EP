@@ -606,9 +606,10 @@ export async function seedDatabase() {
         id: `q_${Date.now()}_${questionCount}`,
         categoryId: questionData.categoryId!,
         question: questionData.question!,
-        options: questionData.options!.map((opt, idx) => ({
+        options: questionData.options!.map((opt) => ({
+          // Preserve original option id (e.g., 'a','b','c','d') so correctAnswer references stay valid
           ...opt,
-          id: `opt_${Date.now()}_${questionCount}_${idx}`,
+          id: opt.id,
         })),
         correctAnswer: questionData.correctAnswer!,
         explanation: questionData.explanation!,
