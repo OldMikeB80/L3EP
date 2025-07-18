@@ -19,13 +19,14 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NetworkProvider } from 'react-native-offline';
 
 import { store, RootState, useAppDispatch } from '@store/store';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 import { seedDatabase } from '@data/seedQuestions';
 import { loadSettingsFromStorage } from '@store/slices/settingsSlice';
 import { loadUser, createUser } from '@store/slices/userSlice';
 import { loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
 import { diagnostics } from './src/utils/diagnostics';
 import { colors } from '@constants/colors';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 // Screens
 import HomeScreen from '@screens/HomeScreen';
@@ -242,120 +243,7 @@ const MainTabs = () => {
   );
 };
 
-// Debug UI Component
-const DebugUI = () => {
-  const dispatch = useAppDispatch();
-  const categories = useSelector((state: RootState) => state.questions.categories);
-  const questions = useSelector((state: RootState) => state.questions.questions);
-  
-  // Only show in development mode
-  if (!__DEV__) {
-    return null;
-  }
-
-  const handleManualSeed = async () => {
-    try {
-      console.log('Manual seed triggered');
-      await seedDatabase();
-
-      // Reload data from database to Redux
-      dispatch(loadCategories());
-      dispatch(loadAllQuestions());
-    } catch (error) {
-      console.error('Manual seed error:', error);
-    }
-  };
-
-  const handleClearAndReseed = async () => {
-    try {
-      console.log('Clear and reseed triggered');
-
-      // Re-initialize database (this will recreate tables if needed)
-      const db = DatabaseService.getInstance();
-      await db.initializeDatabase();
-
-      // Force reseed - seedDatabase will check if empty
-      await seedDatabase();
-
-      // Reload data from database to Redux
-      dispatch(loadCategories());
-      dispatch(loadAllQuestions());
-
-      console.log('Clear and reseed completed');
-    } catch (error) {
-      console.error('Clear and reseed error:', error);
-    }
-  };
-
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        top: 50,
-        right: 10,
-        backgroundColor: colors.accentLight,
-        padding: 10,
-        borderRadius: 5,
-        borderWidth: 2,
-        borderColor: colors.accent,
-        zIndex: 1000,
-      }}
-    >
-      <Text style={{ fontWeight: 'bold', color: colors.textOnAccent, fontSize: 12 }}>
-        Categories: {categories.length}
-      </Text>
-      <Text style={{ color: colors.textOnAccent, fontSize: 12 }}>
-        Questions: {questions.length}
-      </Text>
-      <TouchableOpacity
-        onPress={handleManualSeed}
-        style={{
-          marginTop: 5,
-          backgroundColor: colors.success,
-          padding: 5,
-          borderRadius: 3,
-        }}
-      >
-        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
-          Force Seed Database
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={handleClearAndReseed}
-        style={{
-          marginTop: 5,
-          backgroundColor: colors.error,
-          padding: 5,
-          borderRadius: 3,
-        }}
-      >
-        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
-          Clear & Reseed
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => {
-          const report = diagnostics.getReport();
-          console.log('📊 DIAGNOSTICS REPORT:', report);
-          Alert.alert(
-            'Diagnostics',
-            `Data Loads: ${report.summary.totalDataLoads}\nNavigations: ${report.summary.totalNavigations}\nErrors: ${report.summary.totalErrors}`
-          );
-        }}
-        style={{
-          marginTop: 5,
-          backgroundColor: colors.info,
-          padding: 5,
-          borderRadius: 3,
-        }}
-      >
-        <Text style={{ color: colors.textOnPrimary, fontSize: 11, textAlign: 'center' }}>
-          Show Diagnostics
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+// Debug UI Component removed for production-ready app
 
 const App = () => {
   console.log('========== APP STARTING ==========');
@@ -396,6 +284,15 @@ const App = () => {
     const errorHandler = (error: Error, isFatal: boolean) => {
       diagnostics.logError(error, { isFatal });
       console.error('Global error caught:', error, 'Fatal:', isFatal);
+      
+      // Show alert for fatal errors in production
+      if (isFatal && !__DEV__) {
+        Alert.alert(
+          'Unexpected Error',
+          'The app has encountered an error and needs to restart. We apologize for the inconvenience.',
+          [{ text: 'OK' }]
+        );
+      }
     };
     
     // @ts-ignore
@@ -403,9 +300,11 @@ const App = () => {
     
     const initializeApp = async () => {
       try {
+        console.log('Initializing app...');
+        
         // Initialize database
-        const db = DatabaseService.getInstance();
-        await db.initializeDatabase();
+        const db = StorageService.getInstance();
+        await db.initializeStorage();
 
         // Seed database with initial data if empty
         const categories = await db.getCategories();
@@ -432,8 +331,8 @@ const App = () => {
 
         // Load data into Redux store
         console.log('Loading data into Redux store...');
-        store.dispatch(loadCategories());
-        store.dispatch(loadAllQuestions());
+        await store.dispatch(loadCategories()).unwrap();
+        await store.dispatch(loadAllQuestions()).unwrap();
 
         // Load user settings
         store.dispatch(loadSettingsFromStorage());
@@ -450,10 +349,16 @@ const App = () => {
           }) as any);
         }
 
+        console.log('App initialization complete');
         // Hide splash screen
         // SplashScreen.hide(); // Temporarily disabled
       } catch (error) {
         console.error('App initialization error:', error);
+        Alert.alert(
+          'Initialization Error',
+          'Failed to initialize the app. Please restart the application.',
+          [{ text: 'OK' }]
+        );
         // SplashScreen.hide(); // Temporarily disabled
       }
     };
@@ -465,7 +370,9 @@ const App = () => {
     <Provider store={store}>
       <NetworkProvider>
         <PaperProvider theme={lightTheme}>
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </PaperProvider>
       </NetworkProvider>
     </Provider>

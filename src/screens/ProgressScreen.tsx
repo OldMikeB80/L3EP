@@ -4,7 +4,7 @@ import { Card, Title, Paragraph, ProgressBar, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { useAppSelector } from '@store/store';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 
 const { width } = Dimensions.get('window');
 
@@ -43,7 +43,7 @@ const ProgressScreen: React.FC = () => {
 
   const loadProgressData = async () => {
     // Load data from database
-    const db = DatabaseService.getInstance();
+          const storage = StorageService.getInstance();
     // Implementation would fetch actual data
 
     // Mock data for now

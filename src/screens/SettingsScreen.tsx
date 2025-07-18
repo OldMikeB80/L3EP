@@ -28,7 +28,7 @@ import {
   updatePracticeSettings,
 } from '@store/slices/settingsSlice';
 import { colors } from '@constants/colors';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 import { seedDatabase } from '@data/seedQuestions';
 import { loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
 

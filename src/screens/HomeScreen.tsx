@@ -22,7 +22,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppSelector, useAppDispatch } from '@store/store';
 import { loadUser } from '@store/slices/userSlice';
 import { loadCategories, loadAllQuestions } from '@store/slices/questionSlice';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 import { seedDatabase } from '@data/seedQuestions';
 import { colors } from '@constants/colors';
 

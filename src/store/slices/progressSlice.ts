@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { UserProgress } from '@models/User';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 
 interface ProgressState {
   categoryProgress: Record<string, UserProgress>;
@@ -97,8 +97,8 @@ const initialState: ProgressState = {
 export const loadUserProgress = createAsyncThunk(
   'progress/loadUserProgress',
   async (userId: string) => {
-    const db = DatabaseService.getInstance();
-    const progressArray = await db.getUserProgress(userId);
+    const storage = StorageService.getInstance();
+    const progressArray = await storage.getUserProgress(userId);
     
     // Convert array to Record<string, UserProgress>
     const progressRecord: Record<string, UserProgress> = {};
@@ -113,8 +113,8 @@ export const loadUserProgress = createAsyncThunk(
 export const updateDailyProgress = createAsyncThunk(
   'progress/updateDaily',
   async ({ userId, stats }: { userId: string; stats: Partial<ProgressState['dailyStats']> }) => {
-    const db = DatabaseService.getInstance();
-    await db.recordDailyAnalytics(userId, {
+    const storage = StorageService.getInstance();
+    await storage.recordDailyAnalytics(userId, {
       studyTime: stats.studyTime || 0,
       questionsAttempted: stats.questionsAttempted || 0,
       questionsCorrect: stats.questionsCorrect || 0,
@@ -125,8 +125,8 @@ export const updateDailyProgress = createAsyncThunk(
 );
 
 export const loadWeeklyStats = createAsyncThunk('progress/loadWeekly', async (userId: string) => {
-  const db = DatabaseService.getInstance();
-  return await db.getWeeklyStats(userId);
+  const storage = StorageService.getInstance();
+  return await storage.getWeeklyStats(userId);
 });
 
 const progressSlice = createSlice({

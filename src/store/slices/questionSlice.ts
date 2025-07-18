@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Question, Category, QuestionBank } from '@models/Question';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 import { diagnostics } from '../../utils/diagnostics';
 
 interface QuestionState {
@@ -28,34 +28,34 @@ const initialState: QuestionState = {
 // Async thunks
 export const loadCategories = createAsyncThunk('questions/loadCategories', async () => {
   diagnostics.trackDataLoad('loadCategories');
-  const db = DatabaseService.getInstance();
-  return await db.getCategories();
+  const storage = StorageService.getInstance();
+  return await storage.getCategories();
 });
 
 export const loadQuestionsByCategory = createAsyncThunk(
   'questions/loadByCategory',
   async (categoryId: string) => {
-    const db = DatabaseService.getInstance();
-    return await db.getQuestionsByCategory(categoryId);
+    const storage = StorageService.getInstance();
+    return await storage.getQuestionsByCategory(categoryId);
   },
 );
 
 export const loadAllQuestions = createAsyncThunk('questions/loadAll', async () => {
   diagnostics.trackDataLoad('loadAllQuestions');
-  const db = DatabaseService.getInstance();
-  return await db.getAllQuestions();
+  const storage = StorageService.getInstance();
+  return await storage.getAllQuestions();
 });
 
 export const searchQuestions = createAsyncThunk('questions/search', async (query: string) => {
-  const db = DatabaseService.getInstance();
-  return await db.searchQuestions(query);
+  const storage = StorageService.getInstance();
+  return await storage.searchQuestions(query);
 });
 
 export const toggleBookmark = createAsyncThunk(
   'questions/toggleBookmark',
   async ({ userId, questionId }: { userId: string; questionId: string }) => {
-    const db = DatabaseService.getInstance();
-    await db.toggleBookmark(userId, questionId);
+    const storage = StorageService.getInstance();
+    await storage.toggleBookmark(userId, questionId);
     return questionId;
   },
 );

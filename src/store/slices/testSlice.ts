@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Question } from '@models/Question';
 import { TestSession, TestQuestion } from '@models/User';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 
 interface TestState {
   currentSession: TestSession | null;
@@ -45,18 +45,19 @@ export const startTestSession = createAsyncThunk(
     timeLimit?: number;
     userId: string;
   }) => {
-    const db = DatabaseService.getInstance();
+    const storage = StorageService.getInstance();
 
     // Fetch questions based on test type
     let questions: Question[] = [];
     if (params.type === 'category' && params.categoryId) {
-      questions = await db.getQuestionsByCategory(params.categoryId, params.numberOfQuestions);
+      const allQuestions = await storage.getQuestionsByCategory(params.categoryId);
+      questions = allQuestions.slice(0, params.numberOfQuestions);
     } else if (params.type === 'weak_areas') {
       // Get weak area questions
-      questions = await db.getWeakAreaQuestions(params.userId, params.numberOfQuestions);
+      questions = await storage.getWeakAreaQuestions(params.userId, params.numberOfQuestions);
     } else {
       // Get random mix for practice or mock
-      questions = await db.getRandomQuestions(params.numberOfQuestions);
+      questions = await storage.getRandomQuestions(params.numberOfQuestions);
     }
 
     // Create test session
@@ -75,7 +76,7 @@ export const startTestSession = createAsyncThunk(
       completed: false,
     };
 
-    const sessionId = await db.createTestSession(session);
+    const sessionId = await storage.createTestSession(session);
 
     return {
       session: { ...session, id: sessionId } as TestSession,
@@ -98,10 +99,10 @@ export const submitAnswer = createAsyncThunk(
     { getState },
   ) => {
     const state = getState() as { test: TestState };
-    const db = DatabaseService.getInstance();
+    const storage = StorageService.getInstance();
 
     if (state.test.currentSession) {
-      await db.updateTestAnswer(state.test.currentSession.id, answer.questionId, answer);
+      await storage.updateTestAnswer(state.test.currentSession.id, answer.questionId, answer);
     }
 
     return answer;
@@ -110,13 +111,13 @@ export const submitAnswer = createAsyncThunk(
 
 export const endTestSession = createAsyncThunk('test/endSession', async (_, { getState }) => {
   const state = getState() as { test: TestState };
-  const db = DatabaseService.getInstance();
+  const storage = StorageService.getInstance();
 
   if (state.test.currentSession) {
     const correctAnswers = Object.values(state.test.answers).filter((a) => a.isCorrect).length;
     const score = (correctAnswers / state.test.questions.length) * 100;
 
-    await db.updateTestSession(state.test.currentSession.id, {
+    await storage.updateTestSession(state.test.currentSession.id, {
       endTime: new Date().toISOString(),
       correctAnswers,
       score,

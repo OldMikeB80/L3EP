@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { User, UserProgress } from '@models/User';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { StorageService } from '@services/storage/StorageService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootState } from '../store';
 
@@ -26,28 +26,30 @@ const initialState: UserState = {
 
 // Async thunks
 export const loadUser = createAsyncThunk('user/loadUser', async () => {
-  const userId = await AsyncStorage.getItem('currentUserId');
-  if (!userId) return null;
-
-  const db = DatabaseService.getInstance();
-  // Implement getUser method in DatabaseService
-  return await db.getUser(userId);
+  const storage = StorageService.getInstance();
+  return await storage.getUser();
 });
 
 export const createUser = createAsyncThunk(
   'user/createUser',
   async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const db = DatabaseService.getInstance();
-    const userId = await db.createUser(userData);
-    await AsyncStorage.setItem('currentUserId', userId);
-    return { ...userData, id: userId };
+    const storage = StorageService.getInstance();
+    const user: User = {
+      ...userData,
+      id: `user_${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await storage.saveUser(user);
+    await AsyncStorage.setItem('currentUserId', user.id);
+    return user;
   },
 );
 
 export const updateUserProgress = createAsyncThunk(
   'user/updateProgress',
   async ({ userId, categoryId, progress }: { userId: string; categoryId: string; progress: Partial<UserProgress> }, { getState }) => {
-    const db = DatabaseService.getInstance();
+    const storage = StorageService.getInstance();
     const state = getState() as RootState;
     const effectiveUserId = userId || state.user.currentUser?.id || 'default-user';
     
@@ -67,8 +69,8 @@ export const updateUserProgress = createAsyncThunk(
       ...progress,
     };
     
-    await db.updateUserProgress(effectiveUserId, categoryId, fullProgress);
-    return { categoryId, progress };
+    await storage.saveUserProgress(effectiveUserId, fullProgress);
+    return { categoryId, progress: fullProgress };
   },
 );
 
