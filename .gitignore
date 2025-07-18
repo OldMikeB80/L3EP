@@ -73,3 +73,9 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Log files and temporary files
+*.log
+crash.txt
+device.log
+android-migration-fix-guide.markdown
